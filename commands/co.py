@@ -749,17 +749,17 @@ async def co_handler(msg: Message):
             errors = sum(1 for r in results if r['status'] in ['ERROR', 'FAILED'])
 
             progress_lines = [
-                f"<blockquote><code>「 𝗖𝗵𝗮𝗿𝗴𝗶𝗻𝗴 {price_str} 」</code></blockquote>\n\n",
-                f"<blockquote>「❃」 𝗣𝗿𝗼𝘅𝘆 : <code>{proxy_display}</code>\n",
-                f"「❃」 𝗣𝗿𝗼𝗴𝗿𝗲𝘀𝘀 : <code>{i+1}/{len(cards)}</code></blockquote>\n\n",
-                f"<blockquote>「❃」 𝗖𝗵𝗮𝗿𝗴𝗲𝗱 : <code>{charged} 😎</code>\n",
-                f"「❃」 𝗟𝗶𝘃𝗲 : <code>{live} ✅</code>\n",
-                f"「❃」 𝗗𝗲𝗰𝗹𝗶𝗻𝗲𝗱 : <code>{declined} 🥲</code>\n",
-                f"「❃」 𝟯𝗗𝗦 : <code>{three_ds} 😡</code>\n",
+                f"<blockquote><b>「 𝗖𝗵𝗮𝗿𝗴𝗶𝗻𝗴 {price_str} 」</b></blockquote>\n\n",
+                f"<blockquote>"
+                f"🌐  <b>𝗣𝗿𝗼𝘅𝘆</b>  ·  {proxy_display}\n",
+                f"📊  <b>𝗣𝗿𝗼𝗴𝗿𝗲𝘀𝘀</b>  ·  {i+1}/{len(cards)}</blockquote>\n\n",
+                f"<blockquote>",
+                f"😎 {charged}  ✅ {live}  🥲 {declined}  😡 {three_ds}",
             ]
             if captcha_solved > 0:
-                progress_lines.append(f"「❃」 𝗦𝗼𝗹𝘃𝗲𝗱 : <code>{captcha_solved} 🧩</code>\n")
-            progress_lines.append(f"「❃」 𝗘𝗿𝗿𝗼𝗿𝘀 : <code>{errors} 💀</code></blockquote>")
+                progress_lines.append(f"  🧩 {captcha_solved}")
+            progress_lines.append(f"  💀 {errors}")
+            progress_lines.append(f"</blockquote>")
 
             try:
                 await processing_msg.edit_text(
@@ -788,38 +788,47 @@ async def co_handler(msg: Message):
     req_user = f"@{msg.from_user.username}" if msg.from_user.username else req_name
 
     if charged_card:
-        # ━━━ HIT FORMAT — Only show the charged card ━━━
+        # ━━━ HIT FORMAT — Premium charged card display ━━━
         hit_card = charged_card['card']
-        sep = "━━━━━━━━━━━━━━━━━━━━"
+        merchant = checkout_data['merchant'] or 'Unknown'
+        product = checkout_data['product'] or 'N/A'
+
         response = (
-            f"{sep}\n"
-            f"  <b>𝗛𝗜𝗧 𝗖𝗛𝗔𝗥𝗚𝗘𝗗</b> 😎\n"
-            f"  𝗦𝘁𝗿𝗶𝗽𝗲 𝗖𝗵𝗮𝗿𝗴𝗲 {price_str} ✅\n"
-            f"{sep}\n\n"
-            f"🌐 𝗣𝗿𝗼𝘅𝘆  ➜  {proxy_display}\n"
-            f"🏪 𝗠𝗲𝗿𝗰𝗵𝗮𝗻𝘁  ➜  {checkout_data['merchant'] or 'N/A'}\n"
-            f"📦 𝗣𝗿𝗼𝗱𝘂𝗰𝘁  ➜  {checkout_data['product'] or 'N/A'}\n\n"
-            f"💳 𝗖𝗮𝗿𝗱  ➜  <code>{hit_card}</code>\n"
-            f"📌 𝗦𝘁𝗮𝘁𝘂𝘀  ➜  CHARGED 😎\n"
-            f"📝 𝗥𝗲𝘀𝗽𝗼𝗻𝘀𝗲  ➜  Payment Successful\n\n"
-            f"{sep}\n"
+            f"<blockquote><b>💰 𝗛𝗜𝗧 𝗖𝗛𝗔𝗥𝗚𝗘𝗗 — {price_str}</b></blockquote>\n\n"
+
+            f"<blockquote>"
+            f"🏪  <b>𝗠𝗲𝗿𝗰𝗵𝗮𝗻𝘁</b>  ·  {merchant}\n"
+            f"📦  <b>𝗣𝗿𝗼𝗱𝘂𝗰𝘁</b>  ·  {product}\n"
+            f"🌐  <b>𝗣𝗿𝗼𝘅𝘆</b>  ·  {proxy_display}"
+            f"</blockquote>\n\n"
+
+            f"<blockquote>"
+            f"💳  <code>{hit_card}</code>\n"
+            f"📌  CHARGED ✅  ·  Payment Successful"
+            f"</blockquote>\n\n"
         )
-        summary_parts = [f"😎 {charged_count}"]
+
+        # Stats bar
+        stat_parts = [f"😎 {charged_count}"]
         if live_count > 0:
-            summary_parts.append(f"✅ {live_count}")
-        summary_parts.append(f"🥲 {declined_count}")
+            stat_parts.append(f"✅ {live_count}")
+        if declined_count > 0:
+            stat_parts.append(f"🥲 {declined_count}")
         if captcha_count > 0:
-            summary_parts.append(f"🧩 {captcha_count}")
+            stat_parts.append(f"🧩 {captcha_count}")
         if three_ds_count > 0:
-            summary_parts.append(f"😡 {three_ds_count}")
-        response += "  ".join(summary_parts)
+            stat_parts.append(f"😡 {three_ds_count}")
+
         response += (
-            f"\n🧮 {len(results)}/{len(cards)}  ⏱ {format_time(total_time)}\n"
-            f"{sep}\n"
-            f"👤 {req_user}\n"
+            f"<blockquote>"
+            f"{'  '.join(stat_parts)}\n"
+            f"🧮 {len(results)}/{len(cards)}  ·  ⏱ {format_time(total_time)}\n"
+            f"👤 {req_user}"
+            f"</blockquote>"
         )
+
         if checkout_data.get('success_url'):
-            response += f"\n🔗 <a href=\"{checkout_data['success_url']}\">Open Success Page</a>"
+            response += f"\n\n🔗 <a href=\"{checkout_data['success_url']}\">Open Success Page</a>"
 
         # Copy button with card details
         from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CopyTextButton
@@ -862,76 +871,101 @@ async def co_handler(msg: Message):
             print(f"[DEBUG] Admin notif failed: {str(e)[:50]}")
 
     else:
-        # ━━━ NO HIT — Show compact summary with reason ━━━
-        sep = "━━━━━━━━━━━━━━━━━━━━"
-
-        # Determine WHY charging stopped
+        # ━━━ NO HIT — Clean summary ━━━
         session_expired = any(r['status'] == 'SESSION_EXPIRED' for r in results)
         last_result = results[-1] if results else None
+        merchant = checkout_data['merchant'] or 'Unknown'
+        product = checkout_data['product'] or 'N/A'
 
         if cancelled:
-            header = "𝗦𝗲𝘀𝘀𝗶𝗼𝗻 𝗖𝗮𝗻𝗰𝗲𝗹𝗹𝗲𝗱 ⛔"
+            header_emoji = "⛔"
+            header_text = "𝗦𝗲𝘀𝘀𝗶𝗼𝗻 𝗖𝗮𝗻𝗰𝗲𝗹𝗹𝗲𝗱"
             stop_reason = "Checkout session is no longer active"
         elif session_expired:
-            header = "𝗦𝗲𝘀𝘀𝗶𝗼𝗻 𝗘𝘅𝗽𝗶𝗿𝗲𝗱 ⏰"
-            # Get the actual error message from the expired result
+            header_emoji = "⏰"
+            header_text = "𝗦𝗲𝘀𝘀𝗶𝗼𝗻 𝗘𝘅𝗽𝗶𝗿𝗲𝗱"
             expired_result = next((r for r in results if r['status'] == 'SESSION_EXPIRED'), None)
             stop_reason = expired_result['response'] if expired_result else "Checkout session has expired"
+            # Truncate long Stripe error messages
+            if len(stop_reason) > 60:
+                # Extract just the error code in brackets
+                import re as _re
+                code_match = _re.search(r'\[(\w+)\]', stop_reason)
+                stop_reason = code_match.group(1) if code_match else stop_reason[:57] + "..."
         elif len(results) >= len(cards):
-            header = f"𝗡𝗼 𝗛𝗶𝘁 — {price_str}"
-            stop_reason = "All cards processed, no successful charge"
+            header_emoji = "🥲"
+            header_text = f"𝗡𝗼 𝗛𝗶𝘁 — {price_str}"
+            stop_reason = "All cards processed"
         else:
-            header = f"𝗦𝘁𝗿𝗶𝗽𝗲 𝗖𝗵𝗮𝗿𝗴𝗲 {price_str}"
+            header_emoji = "⚠️"
+            header_text = f"𝗦𝘁𝗿𝗶𝗽𝗲 𝗖𝗵𝗮𝗿𝗴𝗲 {price_str}"
             stop_reason = "Charging stopped"
 
         response = (
-            f"{sep}\n"
-            f"  <b>{header}</b>\n"
-            f"{sep}\n\n"
-            f"🌐 𝗣𝗿𝗼𝘅𝘆  ➜  {proxy_display}\n"
-            f"🏪 𝗠𝗲𝗿𝗰𝗵𝗮𝗻𝘁  ➜  {checkout_data['merchant'] or 'N/A'}\n"
-            f"📦 𝗣𝗿𝗼𝗱𝘂𝗰𝘁  ➜  {checkout_data['product'] or 'N/A'}\n"
-            f"⚠️ 𝗦𝘁𝗮𝘁𝘂𝘀  ➜  {stop_reason}\n\n"
+            f"<blockquote><b>{header_emoji} {header_text}</b></blockquote>\n\n"
+
+            f"<blockquote>"
+            f"🏪  <b>𝗠𝗲𝗿𝗰𝗵𝗮𝗻𝘁</b>  ·  {merchant}\n"
+            f"📦  <b>𝗣𝗿𝗼𝗱𝘂𝗰𝘁</b>  ·  {product}\n"
+            f"🌐  <b>𝗣𝗿𝗼𝘅𝘆</b>  ·  {proxy_display}\n"
+            f"⚠️  <b>𝗦𝘁𝗮𝘁𝘂𝘀</b>  ·  {stop_reason}"
+            f"</blockquote>\n\n"
         )
 
-        # ━━━ Show attempts (max 10) with full card + response ━━━
+        # ━━━ Attempts list — compact, clean ━━━
         _status_emojis = {
             "CHARGED": "😎", "LIVE": "✅", "DECLINED": "🥲",
             "3DS": "😡", "SOLVED CAPTCHA": "🧩", "ERROR": "💀",
             "FAILED": "💀", "UNKNOWN": "❓", "SESSION_EXPIRED": "⏰",
         }
+
         display_results = results[:10]
         if display_results:
-            response += f"<b>𝗔𝘁𝘁𝗲𝗺𝗽𝘁𝘀</b> ({len(results)}):\n"
+            attempts_lines = []
             for idx, r in enumerate(display_results, 1):
                 st_emoji = _status_emojis.get(r['status'], "❓")
                 resp_text = r.get('response', 'N/A')
-                if len(resp_text) > 50:
-                    resp_text = resp_text[:47] + "..."
-                response += (
-                    f"  {idx}. <code>{r['card']}</code>\n"
-                    f"      {st_emoji} {resp_text}\n"
-                )
-            response += "\n"
+                # Extract just the decline code for cleaner display
+                import re as _re
+                code_match = _re.search(r'\[(\w+)\]', resp_text)
+                if code_match:
+                    short_code = code_match.group(1)
+                    # Get the message part after last bracket pair
+                    msg_match = _re.search(r'\] \[(.+?)\]', resp_text)
+                    short_msg = msg_match.group(1) if msg_match else ""
+                    if len(short_msg) > 35:
+                        short_msg = short_msg[:32] + "..."
+                    resp_display = f"{short_code}"
+                    if short_msg:
+                        resp_display += f" · {short_msg}"
+                else:
+                    resp_display = resp_text[:45] + "..." if len(resp_text) > 45 else resp_text
 
+                attempts_lines.append(f"{st_emoji}  <code>{r['card']}</code>\n      {resp_display}")
 
-        # Summary
-        response += f"{sep}\n"
-        summary_parts = []
+            response += f"<blockquote><b>𝗔𝘁𝘁𝗲𝗺𝗽𝘁𝘀</b> ({len(results)}):\n"
+            response += "\n".join(attempts_lines)
+            response += "</blockquote>\n\n"
+
+        # Stats footer
+        stat_parts = []
         if live_count > 0:
-            summary_parts.append(f"✅ {live_count}")
-        summary_parts.append(f"🥲 {declined_count}")
+            stat_parts.append(f"✅ {live_count}")
+        if declined_count > 0:
+            stat_parts.append(f"🥲 {declined_count}")
         if captcha_count > 0:
-            summary_parts.append(f"🧩 {captcha_count}")
+            stat_parts.append(f"🧩 {captcha_count}")
         if three_ds_count > 0:
-            summary_parts.append(f"😡 {three_ds_count}")
+            stat_parts.append(f"😡 {three_ds_count}")
         if error_count > 0:
-            summary_parts.append(f"💀 {error_count}")
-        response += "  ".join(summary_parts)
+            stat_parts.append(f"💀 {error_count}")
+
         response += (
-            f"\n🧮 {len(results)}/{len(cards)}  ⏱ {format_time(total_time)}\n"
-            f"{sep}\n"
+            f"<blockquote>"
+            f"{'  '.join(stat_parts)}\n"
+            f"🧮 {len(results)}/{len(cards)}  ·  ⏱ {format_time(total_time)}\n"
             f"👤 {req_user}"
+            f"</blockquote>"
         )
 
         await processing_msg.edit_text(response, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
