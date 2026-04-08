@@ -293,13 +293,23 @@ async def solve_hcaptcha(site_key: str, url: str, rqdata: str = None, proxy: str
                     error = poll_data.get("error", "")
                     error_msg = str(poll_data.get("message", "")).lower()
                     
-                    # NopeCHA can indicate "still processing" in multiple ways:
+                    # Error 14 = BANNED per NopeCHA docs — DO NOT treat as "incomplete"
+                    # Even if message says "incomplete job", error 14 is terminal
+                    if isinstance(error, int) and error == 14:
+                        print(f"[DEBUG] ❌ NopeCHA error 14: Banned/blocked — cannot solve this captcha")
+                        print(f"[DEBUG]    Message: {error_msg}")
+                        print(f"[DEBUG]    This usually means:")
+                        print(f"[DEBUG]    - Your NopeCHA account is banned/restricted")
+                        print(f"[DEBUG]    - The captcha type (Enterprise + rqdata) is not supported")
+                        print(f"[DEBUG]    - Consider using a different solver (CapSolver, 2Captcha)")
+                        return None
+                    
+                    # NopeCHA can indicate "still processing" in these ways:
                     # - {"error": "Incomplete"}
-                    # - {"error": 14, "message": "Incomplete job"}  (HTTP 409)
+                    # - HTTP 409 with non-14 error codes
                     is_incomplete = (
                         error == "Incomplete"
-                        or "incomplete" in error_msg
-                        or (isinstance(error, int) and error == 14 and "incomplete" in error_msg)
+                        or ("incomplete" in error_msg and not isinstance(error, int))
                     )
                     
                     if is_incomplete:
