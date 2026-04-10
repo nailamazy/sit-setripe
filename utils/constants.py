@@ -119,6 +119,287 @@ BROWSER_PROFILES = [
     # ━━━━━ Opera 115 ━━━━━
     {"tls": "chrome131", "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 OPR/115.0.0.0"},
     {"tls": "chrome131", "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 OPR/115.0.0.0"},
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    #  MOBILE PHONE PROFILES — All Major Brands & Models
+    #  UA + TLS fingerprint matched for realistic mobile browsing
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    # ━━━━━ Samsung Galaxy S Series (Flagship) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; SM-S928B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; SM-S926B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; SM-S921B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; SM-S916B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; SM-S911B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; SM-S908B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 13; SM-S906B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Samsung Galaxy Z Fold/Flip ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; SM-F956B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; SM-F946B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; SM-F936B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 15; SM-F741B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; SM-F731B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Samsung Galaxy A Series (Mid-range) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; SM-A566B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; SM-A556B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; SM-A546B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; SM-A356B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; SM-A256B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 13; SM-A155F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Apple iPhone (Safari) ━━━━━
+    {"tls": "safari18_0", "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.4 Mobile/15E148 Safari/604.1", "mobile": True},
+    {"tls": "safari18_0", "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_3_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.3 Mobile/15E148 Safari/604.1", "mobile": True},
+    {"tls": "safari18_0", "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_2_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Mobile/15E148 Safari/604.1", "mobile": True},
+    {"tls": "safari18_0", "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1", "mobile": True},
+    {"tls": "safari18_0", "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.7 Mobile/15E148 Safari/604.1", "mobile": True},
+    {"tls": "safari18_0", "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_6_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Mobile/15E148 Safari/604.1", "mobile": True},
+    {"tls": "safari18_0", "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1", "mobile": True},
+    # ━━━━━ Apple iPhone (Chrome on iOS) ━━━━━
+    {"tls": "safari18_0", "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/136.0.7103.56 Mobile/15E148 Safari/604.1", "mobile": True},
+    {"tls": "safari18_0", "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/135.0.7049.83 Mobile/15E148 Safari/604.1", "mobile": True},
+    {"tls": "safari18_0", "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/134.0.6998.99 Mobile/15E148 Safari/604.1", "mobile": True},
+    # ━━━━━ Apple iPad ━━━━━
+    {"tls": "safari18_0", "ua": "Mozilla/5.0 (iPad; CPU OS 18_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.4 Mobile/15E148 Safari/604.1", "mobile": True},
+    {"tls": "safari18_0", "ua": "Mozilla/5.0 (iPad; CPU OS 18_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.3 Mobile/15E148 Safari/604.1", "mobile": True},
+    {"tls": "safari18_0", "ua": "Mozilla/5.0 (iPad; CPU OS 17_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.7 Mobile/15E148 Safari/604.1", "mobile": True},
+    # ━━━━━ Google Pixel ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; Pixel 9 Pro XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; Pixel 9 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 15; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 15; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 15; Pixel 8a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; Pixel 7 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; Pixel 7a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; Pixel 6 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Xiaomi ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; 24129PN74G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; 2407FPN8EG) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; 2311DRK48C) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; 23113RKC6G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; 2304FPN6DC) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 13; 2209116AG) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Xiaomi Redmi / Redmi Note ━━━━━
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; 24069PC21G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; 2312DRA50G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; 23076RN4BI) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 13; 23021RAAEG) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ POCO ━━━━━
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; 24082PC09G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; 23113PCD6G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 13; 22101320G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ OnePlus ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; CPH2611) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 15; CPH2581) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; CPH2551) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; CPH2449) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; NE2215) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 13; PHB110) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ OPPO ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; CPH2639) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; CPH2585) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; CPH2557) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; CPH2525) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 13; CPH2473) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Vivo ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; V2329) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; V2316) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; V2309) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; V2254) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 13; V2237) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Huawei (No Google, uses HarmonyOS but some still use Chrome) ━━━━━
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 12; NOH-AN01) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 12; ELS-AN00) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 12; OCE-AN10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 10; VOG-L29) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 10; MAR-LX1A) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Honor ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 14; PJD-AN20) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; FNE-NX9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; REP-AN00) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 13; ANY-NX1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Sony Xperia ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; XQ-EC72) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; XQ-DQ72) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; XQ-CT72) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; XQ-BC72) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Realme ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; RMX3998) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; RMX3931) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; RMX3771) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; RMX3700) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 13; RMX3630) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Motorola ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; motorola edge 50 ultra) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; motorola razr 50 ultra) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; moto g84 5G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; moto g54 5G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 13; moto g73 5G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Nothing Phone ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; A065) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; A063) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; A142) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ ASUS ROG Phone / Zenfone ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; ASUS_AI2401) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; ASUS_AI2205) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; ASUS_AI2302) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Nokia ━━━━━
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; Nokia X30 5G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 13; Nokia G60 5G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 13; Nokia G22) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Infinix ━━━━━
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; Infinix X6871) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; Infinix X6739) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 13; Infinix X6711) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Tecno ━━━━━
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; TECNO CL8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; TECNO CK8n) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 13; TECNO CK7n) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ ZTE / Nubia ━━━━━
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; NX769J) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; NX729J) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 13; ZTE A2325) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ LG (Legacy models still in use) ━━━━━
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 13; LM-V600) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 12; LM-G900N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 12; LM-V510N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Samsung Galaxy Tab (Tablet) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; SM-X926B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; SM-X816B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; SM-T736B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36", "mobile": True},
+    # ━━━━━ Lenovo / Legion ━━━━━
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; Lenovo L71091) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; Lenovo TB350FU) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36", "mobile": True},
+    # ━━━━━ Blackview / Rugged Phones ━━━━━
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; BV9300 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 13; BV8900) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ iQOO (Vivo Sub-brand) ━━━━━
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 15; V2329A) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; V2254A) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    #  2025-2026 LATEST DEVICES — Updated to Chrome 136 + newest models
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    # ━━━━━ Samsung Galaxy S25 Series (2025 Flagship) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; SM-S938B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; SM-S936B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; SM-S931B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Samsung Galaxy M Series (Budget) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; SM-M556B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; SM-M356B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; SM-M156B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; SM-M546B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Samsung Galaxy F Series (India) ━━━━━
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; SM-E556B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; SM-E346B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Apple iPhone 16 Series (iOS 18.4) ━━━━━
+    {"tls": "safari18_0", "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.4.1 Mobile/15E148 Safari/604.1", "mobile": True},
+    {"tls": "safari18_0", "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/136.0.7103.108 Mobile/15E148 Safari/604.1", "mobile": True},
+    # ━━━━━ Google Pixel 9a (2025) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; Pixel 9a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Xiaomi 15 / 15 Pro (2025 Flagship) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; 25010PN70G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; 25011PN40G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Redmi 14 Pro / Redmi Note 14 Pro+ (2025) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; 2501FPN8EG) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 14; 24108RN54G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; 2410DPN24G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Redmi Turbo 4 / Turbo 3 (2025) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; 2504FPN8EG) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; 24081PC1ECG) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ POCO F7 / F7 Pro / X7 Pro (2025) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; 2501FPN6DG) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; 24118PC9EG) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; 2411DPC09G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ OnePlus 13 / 13R (2025) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; CPH2653) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; CPH2645) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ OPPO Find X8 / X8 Pro (2025) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; CPH2651) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; CPH2643) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 15; CPH2621) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ OPPO Reno 13 / Reno 12 (2025) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; CPH2669) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; CPH2617) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Vivo X200 / X200 Pro (2025 Flagship) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; V2338) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; V2341) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 15; V2330) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Vivo V40 / V40 Pro (2025 Mid-range) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; V2342) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; V2325) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Honor 300 / 300 Pro / Magic7 Pro (2025) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; SKC-AN20) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; MDP-AN00) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; NBL-AN10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Sony Xperia 1 VII / 10 VII (2025-2026) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; XQ-FC72) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; XQ-FA72) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Realme GT 7 Pro / GT Neo 6 (2025) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; RMX4061) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; RMX4007) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; RMX3960) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Realme 13 / Realme 13 Pro+ (2025) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; RMX4045) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; RMX3982) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Motorola Edge 60 / Razr 50s (2025-2026) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; motorola edge 60 ultra) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; motorola razr 50s) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; moto g85 5G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Nothing Phone 3a / CMF Phone 2 (2025) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; A059) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; A069) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; B065) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ ASUS ROG Phone 9 / Zenfone 12 (2025) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; ASUS_AI2501) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; ASUS_AI2503) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Nubia (Red Magic Gaming + Z Series) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; NX769J) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; NX779J) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; NX759J) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; NX739J) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; NX709S) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 13; NX679J) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; NX809J) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; NX721J) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ itel (Budget smartphones — Africa, Asia, LatAm) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 14; itel S25) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 14; itel S25 Ultra) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; itel S24) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 13; itel P55 5G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 13; itel P55+) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 13; itel A70) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 12; itel A60s) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 13; itel S23+) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Infinix (latest 2025 models) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; Infinix X6898) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 14; Infinix X6875) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; Infinix X6850) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Tecno (latest 2025 models) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; TECNO CL9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 14; TECNO CL8n) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; TECNO CK9n) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ ZTE latest (2025 models) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; ZTE A2425) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; ZTE A2325G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Nokia (2025 HMD rebrand) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 14; Nokia XR40) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; Nokia G42 5G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Lenovo Legion / Tab (2025) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; Lenovo L71121) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 14; Lenovo TB371FU) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36", "mobile": True},
+    # ━━━━━ Blackview / DOOGEE / Ulefone (Rugged 2025) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 14; BV9300 Ultra) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; DOOGEE S200) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 14; Ulefone Armor 26 Ultra) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Google Pixel Fold / Pixel Tablet (2025) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; Pixel 9 Pro Fold) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; Pixel Tablet) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36", "mobile": True},
+    # ━━━━━ iQOO 13 / Neo 10 (2025) ━━━━━
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; V2340A) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome136", "ua": "Mozilla/5.0 (Linux; Android 15; V2345A) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 14; V2336A) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    # ━━━━━ Huawei Pura / nova (2025 HarmonyOS with Chrome) ━━━━━
+    {"tls": "chrome133a", "ua": "Mozilla/5.0 (Linux; Android 12; ALT-AL10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36", "mobile": True},
+    {"tls": "chrome131", "ua": "Mozilla/5.0 (Linux; Android 12; FOA-LX9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36", "mobile": True},
 ]
 
 # Derived lists for backward compatibility
