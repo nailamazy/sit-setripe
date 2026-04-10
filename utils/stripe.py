@@ -12,13 +12,25 @@ from utils.constants import USER_AGENTS, TLS_PROFILES, get_random_browser_profil
 # Fingerprints are now generated fresh per attempt (rotation)
 
 
+def _is_mobile_ua(ua: str) -> bool:
+    """Check if a User-Agent string is from a mobile device."""
+    return any(k in ua for k in ("Mobile", "Android", "iPhone", "iPad", "iPod"))
+
+
 def _detect_browser_info(ua: str) -> dict:
-    """Extract browser name, version, and platform from user agent string."""
-    info = {"browser": "Chrome", "version": "131", "platform": "Windows"}
+    """Extract browser name, version, platform, and mobile flag from user agent string."""
+    info = {"browser": "Chrome", "version": "131", "platform": "Windows", "mobile": False}
+
+    # Detect mobile
+    info["mobile"] = _is_mobile_ua(ua)
 
     # Detect platform
-    if "Macintosh" in ua or "Mac OS X" in ua:
+    if "iPhone" in ua or "iPad" in ua or "iPod" in ua:
+        info["platform"] = "iOS"
+    elif "Macintosh" in ua or "Mac OS X" in ua:
         info["platform"] = "macOS"
+    elif "Android" in ua:
+        info["platform"] = "Android"
     elif "Linux" in ua:
         info["platform"] = "Linux"
     else:
@@ -32,6 +44,11 @@ def _detect_browser_info(ua: str) -> dict:
     elif "OPR/" in ua:
         info["browser"] = "Opera"
         m = re.search(r'Chrome/(\d+)', ua)
+        if m: info["version"] = m.group(1)
+    elif "CriOS/" in ua:
+        # Chrome on iOS
+        info["browser"] = "CriOS"
+        m = re.search(r'CriOS/(\d+)', ua)
         if m: info["version"] = m.group(1)
     elif "Firefox/" in ua:
         info["browser"] = "Firefox"
@@ -70,11 +87,12 @@ def get_stripe_headers(user_agent: str = None) -> dict:
         "accept": "application/json",
         "accept-language": random.choice([
             "en-US,en;q=0.9",
-            "en-US,en;q=0.9,id;q=0.8",
             "en-GB,en;q=0.9,en-US;q=0.8",
-            "en-US,en;q=0.9,nl;q=0.8",
-            "en-US,en;q=0.9,de;q=0.8",
-            "en-US,en;q=0.9,fr;q=0.8",
+            "en-US,en;q=0.9,en-GB;q=0.8",
+            "en,en-US;q=0.9",
+            "en-US,en;q=0.8",
+            "en-GB,en-US;q=0.9,en;q=0.8",
+            "en-US,en-GB;q=0.9,en;q=0.8",
         ]),
         "content-type": "application/x-www-form-urlencoded",
         "origin": "https://checkout.stripe.com",
@@ -88,6 +106,7 @@ def get_stripe_headers(user_agent: str = None) -> dict:
         browser = _detect_browser_info(user_agent)
         v = browser["version"]
         platform = browser["platform"]
+        is_mobile = browser["mobile"]
         if browser["browser"] in ("Chrome", "Edge", "Opera"):
             g_brand, g_ver = _get_grease_brand(v)
             if browser["browser"] == "Edge":
@@ -96,8 +115,14 @@ def get_stripe_headers(user_agent: str = None) -> dict:
                 headers["sec-ch-ua"] = f'"Chromium";v="{v}", "{g_brand}";v="{g_ver}", "Opera";v="{v}"'
             else:
                 headers["sec-ch-ua"] = f'"Chromium";v="{v}", "{g_brand}";v="{g_ver}", "Google Chrome";v="{v}"'
-            headers["sec-ch-ua-mobile"] = "?0"
-            headers["sec-ch-ua-platform"] = f'"{platform}"'
+            headers["sec-ch-ua-mobile"] = "?1" if is_mobile else "?0"
+            # Platform header: Android for Android phones, etc.
+            if platform == "Android":
+                headers["sec-ch-ua-platform"] = '"Android"'
+            elif platform == "iOS":
+                headers["sec-ch-ua-platform"] = '"iOS"'
+            else:
+                headers["sec-ch-ua-platform"] = f'"{platform}"'
     return headers
 
 
@@ -118,12 +143,12 @@ def get_headers(stripe_js: bool = False) -> dict:
 
         headers["accept-language"] = random.choice([
             "en-US,en;q=0.9",
-            "en-US,en;q=0.9,id;q=0.8",
             "en-GB,en;q=0.9,en-US;q=0.8",
-            "en-US,en;q=0.9,nl;q=0.8",
-            "en-US,en;q=0.9,de;q=0.8",
-            "en-US,en;q=0.9,fr;q=0.8",
-            "en-US,en;q=0.9,ja;q=0.8",
+            "en-US,en;q=0.9,en-GB;q=0.8",
+            "en,en-US;q=0.9",
+            "en-US,en;q=0.8",
+            "en-GB,en-US;q=0.9,en;q=0.8",
+            "en-US,en-GB;q=0.9,en;q=0.8",
         ])
         headers["sec-fetch-dest"] = "empty"
         headers["sec-fetch-mode"] = "cors"
@@ -138,8 +163,13 @@ def get_headers(stripe_js: bool = False) -> dict:
                 headers["sec-ch-ua"] = f'"Chromium";v="{v}", "{g_brand}";v="{g_ver}", "Opera";v="{v}"'
             else:
                 headers["sec-ch-ua"] = f'"Chromium";v="{v}", "{g_brand}";v="{g_ver}", "Google Chrome";v="{v}"'
-            headers["sec-ch-ua-mobile"] = "?0"
-            headers["sec-ch-ua-platform"] = f'"{platform}"'
+            headers["sec-ch-ua-mobile"] = "?1" if browser.get("mobile") else "?0"
+            if platform == "Android":
+                headers["sec-ch-ua-platform"] = '"Android"'
+            elif platform == "iOS":
+                headers["sec-ch-ua-platform"] = '"iOS"'
+            else:
+                headers["sec-ch-ua-platform"] = f'"{platform}"'
         # Firefox/Safari don't send sec-ch-ua
 
     return headers
@@ -389,38 +419,241 @@ def generate_eid() -> str:
 
 # Real GPU renderers seen on common hardware
 _WEBGL_RENDERERS = [
-    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
-    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    # ━━━ Windows — NVIDIA (D3D11) ━━━
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4090 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4080 SUPER Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 Ti SUPER Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4060 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)"},
     {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4060 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
-    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 SUPER Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3090 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3080 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3080 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3050 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 2080 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 2080 SUPER Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 2070 SUPER Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 2060 SUPER Direct3D11 vs_5_0 ps_5_0, D3D11)"},
     {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 2060 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
-    {"vendor": "Google Inc. (AMD)", "renderer": "ANGLE (AMD, AMD Radeon RX 580 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
-    {"vendor": "Google Inc. (AMD)", "renderer": "ANGLE (AMD, AMD Radeon RX 6700 XT Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1080 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1080 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1070 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 SUPER Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1650 SUPER Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1650 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1060 6GB Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1050 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    # ━━━ Windows — AMD (D3D11) ━━━
+    {"vendor": "Google Inc. (AMD)", "renderer": "ANGLE (AMD, AMD Radeon RX 7900 XTX Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (AMD)", "renderer": "ANGLE (AMD, AMD Radeon RX 7900 XT Direct3D11 vs_5_0 ps_5_0, D3D11)"},
     {"vendor": "Google Inc. (AMD)", "renderer": "ANGLE (AMD, AMD Radeon RX 7800 XT Direct3D11 vs_5_0 ps_5_0, D3D11)"},
-    {"vendor": "Google Inc. (Intel)", "renderer": "ANGLE (Intel, Intel(R) UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
-    {"vendor": "Google Inc. (Intel)", "renderer": "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (AMD)", "renderer": "ANGLE (AMD, AMD Radeon RX 7700 XT Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (AMD)", "renderer": "ANGLE (AMD, AMD Radeon RX 7600 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (AMD)", "renderer": "ANGLE (AMD, AMD Radeon RX 6900 XT Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (AMD)", "renderer": "ANGLE (AMD, AMD Radeon RX 6800 XT Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (AMD)", "renderer": "ANGLE (AMD, AMD Radeon RX 6700 XT Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (AMD)", "renderer": "ANGLE (AMD, AMD Radeon RX 6600 XT Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (AMD)", "renderer": "ANGLE (AMD, AMD Radeon RX 5700 XT Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (AMD)", "renderer": "ANGLE (AMD, AMD Radeon RX 5600 XT Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (AMD)", "renderer": "ANGLE (AMD, AMD Radeon RX 580 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (AMD)", "renderer": "ANGLE (AMD, AMD Radeon RX 570 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    # ━━━ Windows — Intel (D3D11) ━━━
     {"vendor": "Google Inc. (Intel)", "renderer": "ANGLE (Intel, Intel(R) UHD Graphics 770 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
-    # macOS renderers
+    {"vendor": "Google Inc. (Intel)", "renderer": "ANGLE (Intel, Intel(R) UHD Graphics 730 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (Intel)", "renderer": "ANGLE (Intel, Intel(R) UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (Intel)", "renderer": "ANGLE (Intel, Intel(R) UHD Graphics 620 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (Intel)", "renderer": "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (Intel)", "renderer": "ANGLE (Intel, Intel(R) Iris(R) Plus Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (Intel)", "renderer": "ANGLE (Intel, Intel(R) Arc(TM) A770 Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    {"vendor": "Google Inc. (Intel)", "renderer": "ANGLE (Intel, Intel(R) Arc(TM) A750 Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+    # ━━━ macOS — Apple Silicon (OpenGL 4.1) ━━━
     {"vendor": "Google Inc. (Apple)", "renderer": "ANGLE (Apple, Apple M1, OpenGL 4.1)"},
-    {"vendor": "Google Inc. (Apple)", "renderer": "ANGLE (Apple, Apple M2, OpenGL 4.1)"},
-    {"vendor": "Google Inc. (Apple)", "renderer": "ANGLE (Apple, Apple M3, OpenGL 4.1)"},
     {"vendor": "Google Inc. (Apple)", "renderer": "ANGLE (Apple, Apple M1 Pro, OpenGL 4.1)"},
-    # Linux renderers (Mesa/OpenGL 4.5 — D3D11 is Windows-only)
+    {"vendor": "Google Inc. (Apple)", "renderer": "ANGLE (Apple, Apple M1 Max, OpenGL 4.1)"},
+    {"vendor": "Google Inc. (Apple)", "renderer": "ANGLE (Apple, Apple M2, OpenGL 4.1)"},
+    {"vendor": "Google Inc. (Apple)", "renderer": "ANGLE (Apple, Apple M2 Pro, OpenGL 4.1)"},
+    {"vendor": "Google Inc. (Apple)", "renderer": "ANGLE (Apple, Apple M2 Max, OpenGL 4.1)"},
+    {"vendor": "Google Inc. (Apple)", "renderer": "ANGLE (Apple, Apple M3, OpenGL 4.1)"},
+    {"vendor": "Google Inc. (Apple)", "renderer": "ANGLE (Apple, Apple M3 Pro, OpenGL 4.1)"},
+    {"vendor": "Google Inc. (Apple)", "renderer": "ANGLE (Apple, Apple M3 Max, OpenGL 4.1)"},
+    {"vendor": "Google Inc. (Apple)", "renderer": "ANGLE (Apple, Apple M4, OpenGL 4.1)"},
+    {"vendor": "Google Inc. (Apple)", "renderer": "ANGLE (Apple, Apple M4 Pro, OpenGL 4.1)"},
+    {"vendor": "Google Inc. (AMD)", "renderer": "ANGLE (AMD, AMD Radeon Pro 5500M, OpenGL 4.1)"},
+    {"vendor": "Google Inc. (AMD)", "renderer": "ANGLE (AMD, AMD Radeon Pro 580, OpenGL 4.1)"},
+    # ━━━ Linux — Mesa/OpenGL 4.5 ━━━
     {"vendor": "Google Inc. (Intel)", "renderer": "ANGLE (Intel, Mesa Intel(R) UHD Graphics 630 (CFL GT2), OpenGL 4.5)"},
+    {"vendor": "Google Inc. (Intel)", "renderer": "ANGLE (Intel, Mesa Intel(R) UHD Graphics 770 (ADL-S GT1), OpenGL 4.5)"},
+    {"vendor": "Google Inc. (Intel)", "renderer": "ANGLE (Intel, Mesa Intel(R) Iris(R) Xe Graphics (TGL GT2), OpenGL 4.5)"},
     {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1650/PCIe/SSE2, OpenGL 4.5)"},
     {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3060/PCIe/SSE2, OpenGL 4.5)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070/PCIe/SSE2, OpenGL 4.5)"},
+    {"vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070/PCIe/SSE2, OpenGL 4.5)"},
     {"vendor": "Google Inc. (AMD)", "renderer": "ANGLE (AMD, AMD Radeon RX 580, OpenGL 4.5)"},
+    {"vendor": "Google Inc. (AMD)", "renderer": "ANGLE (AMD, AMD Radeon RX 6700 XT, OpenGL 4.5)"},
+    {"vendor": "Google Inc. (AMD)", "renderer": "ANGLE (AMD, AMD Radeon RX 7800 XT, OpenGL 4.5)"},
+]
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Mobile GPU Renderers — Real device WebGL fingerprints
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+_MOBILE_WEBGL_RENDERERS = [
+    # ━━━ Qualcomm Adreno — Samsung, OnePlus, Xiaomi, Sony, OPPO, Vivo, etc. ━━━
+    {"vendor": "Qualcomm", "renderer": "Adreno (TM) 750"},           # Snapdragon 8 Gen 3 — Galaxy S24, OnePlus 12
+    {"vendor": "Qualcomm", "renderer": "Adreno (TM) 740"},           # Snapdragon 8 Gen 2 — Galaxy S23, Xiaomi 13
+    {"vendor": "Qualcomm", "renderer": "Adreno (TM) 730"},           # Snapdragon 8 Gen 1 — Galaxy S22, OnePlus 10
+    {"vendor": "Qualcomm", "renderer": "Adreno (TM) 725"},           # Snapdragon 8+ Gen 1
+    {"vendor": "Qualcomm", "renderer": "Adreno (TM) 660"},           # Snapdragon 888 — Galaxy S21, Mi 11
+    {"vendor": "Qualcomm", "renderer": "Adreno (TM) 650"},           # Snapdragon 865 — Galaxy S20, OnePlus 8
+    {"vendor": "Qualcomm", "renderer": "Adreno (TM) 642L"},          # Snapdragon 778G — Galaxy A52s, Nothing Phone 1
+    {"vendor": "Qualcomm", "renderer": "Adreno (TM) 619"},           # Snapdragon 695 — Galaxy A54, Redmi Note 12 Pro
+    {"vendor": "Qualcomm", "renderer": "Adreno (TM) 618"},           # Snapdragon 730G — Galaxy A72, Pixel 4a
+    {"vendor": "Qualcomm", "renderer": "Adreno (TM) 616"},           # Snapdragon 720G — Galaxy A52
+    {"vendor": "Qualcomm", "renderer": "Adreno (TM) 612"},           # Snapdragon 680 — Galaxy A34, Redmi Note 12
+    {"vendor": "Qualcomm", "renderer": "Adreno (TM) 610"},           # Snapdragon 665 — Galaxy A30
+    {"vendor": "Qualcomm", "renderer": "Adreno (TM) 512"},           # Snapdragon 636 — Nokia X30
+    # ━━━ ARM Mali — Samsung Exynos, Huawei Kirin, MediaTek Dimensity ━━━
+    {"vendor": "ARM", "renderer": "Mali-G720-Immortalis MC12"},      # Exynos 2400 — Galaxy S24 (global)
+    {"vendor": "ARM", "renderer": "Mali-G715-Immortalis MC11"},      # Exynos 2200 — Galaxy S22 (global)
+    {"vendor": "ARM", "renderer": "Mali-G710 MC10"},                 # Dimensity 9200 — Vivo X90
+    {"vendor": "ARM", "renderer": "Mali-G78 MC14"},                  # Exynos 2100 — Galaxy S21 (global)
+    {"vendor": "ARM", "renderer": "Mali-G77 MC9"},                   # Kirin 9000 — Huawei Mate 40 Pro
+    {"vendor": "ARM", "renderer": "Mali-G76 MC4"},                   # Kirin 990 — Huawei P40 Pro
+    {"vendor": "ARM", "renderer": "Mali-G72 MC12"},                  # Kirin 970 — Huawei P20 Pro
+    {"vendor": "ARM", "renderer": "Mali-G68 MC4"},                   # Dimensity 1080 — Redmi Note 12 Pro
+    {"vendor": "ARM", "renderer": "Mali-G57 MC3"},                   # Dimensity 920 — OPPO Reno 7
+    {"vendor": "ARM", "renderer": "Mali-G57 MC2"},                   # Dimensity 810 — Realme Narzo 50
+    {"vendor": "ARM", "renderer": "Mali-G52 MC2"},                   # MediaTek Helio G99 — Infinix, Tecno
+    {"vendor": "ARM", "renderer": "Mali-G52"},                       # Helio G85 — Redmi Note 10
+    {"vendor": "ARM", "renderer": "Mali-G51 MP4"},                   # Helio P90 — OPPO Reno
+    # ━━━ Apple GPU — iPhone & iPad ━━━
+    {"vendor": "Apple Inc.", "renderer": "Apple GPU"},               # Generic Apple label (all iPhones)
+    {"vendor": "Apple Inc.", "renderer": "Apple A17 Pro GPU"},       # iPhone 15 Pro
+    {"vendor": "Apple Inc.", "renderer": "Apple A16 GPU"},           # iPhone 14 Pro
+    {"vendor": "Apple Inc.", "renderer": "Apple A15 GPU"},           # iPhone 13 / 14
+    {"vendor": "Apple Inc.", "renderer": "Apple A14 GPU"},           # iPhone 12
+    {"vendor": "Apple Inc.", "renderer": "Apple M2 GPU"},            # iPad Pro M2
+    {"vendor": "Apple Inc.", "renderer": "Apple M1 GPU"},            # iPad Pro M1 / iPad Air M1
+    # ━━━ Google Tensor (Pixel phones) ━━━
+    {"vendor": "ARM", "renderer": "Mali-G715-Immortalis MC10"},      # Tensor G4 — Pixel 9
+    {"vendor": "ARM", "renderer": "Mali-G710 MC10"},                 # Tensor G3 — Pixel 8
+    {"vendor": "ARM", "renderer": "Mali-G78 MP20"},                  # Tensor G2 — Pixel 7
+    {"vendor": "ARM", "renderer": "Mali-G78"},                       # Tensor — Pixel 6
+    # ━━━ PowerVR (some budget phones) ━━━
+    {"vendor": "Imagination Technologies", "renderer": "PowerVR Rogue GE8320"},  # MediaTek MT6769
+    {"vendor": "Imagination Technologies", "renderer": "PowerVR Rogue GE8322"},  # MediaTek MT6768
+]
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Mobile Screen Resolutions — All Major Brands
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+_MOBILE_SCREEN_RESOLUTIONS = [
+    # ━━━ iPhone ━━━
+    {"w": 393, "h": 852, "avail_w": 393, "avail_h": 852, "dpr": 3},    # iPhone 15 Pro / 14 Pro
+    {"w": 430, "h": 932, "avail_w": 430, "avail_h": 932, "dpr": 3},    # iPhone 15 Pro Max / 14 Pro Max
+    {"w": 390, "h": 844, "avail_w": 390, "avail_h": 844, "dpr": 3},    # iPhone 13 / 14
+    {"w": 428, "h": 926, "avail_w": 428, "avail_h": 926, "dpr": 3},    # iPhone 13 Pro Max / 14 Plus
+    {"w": 375, "h": 812, "avail_w": 375, "avail_h": 812, "dpr": 3},    # iPhone X / 11 Pro / 12 Mini
+    {"w": 414, "h": 896, "avail_w": 414, "avail_h": 896, "dpr": 3},    # iPhone 11 Pro Max
+    {"w": 375, "h": 667, "avail_w": 375, "avail_h": 667, "dpr": 2},    # iPhone SE / 8 / 7 / 6s
+    # ━━━ iPad ━━━
+    {"w": 1024, "h": 1366, "avail_w": 1024, "avail_h": 1366, "dpr": 2},  # iPad Pro 12.9"
+    {"w": 834, "h": 1194, "avail_w": 834, "avail_h": 1194, "dpr": 2},    # iPad Pro 11"
+    {"w": 820, "h": 1180, "avail_w": 820, "avail_h": 1180, "dpr": 2},    # iPad Air (M1)
+    {"w": 810, "h": 1080, "avail_w": 810, "avail_h": 1080, "dpr": 2},    # iPad 10th gen
+    # ━━━ Samsung Galaxy S24/S23/S22 (QHD+ Dynamic AMOLED) ━━━
+    {"w": 360, "h": 780, "avail_w": 360, "avail_h": 780, "dpr": 3},     # Galaxy S24
+    {"w": 384, "h": 854, "avail_w": 384, "avail_h": 854, "dpr": 2.8125},# Galaxy S24+
+    {"w": 412, "h": 915, "avail_w": 412, "avail_h": 915, "dpr": 3.5},   # Galaxy S24 Ultra
+    {"w": 360, "h": 780, "avail_w": 360, "avail_h": 780, "dpr": 3},     # Galaxy S23
+    {"w": 384, "h": 854, "avail_w": 384, "avail_h": 854, "dpr": 2.8125},# Galaxy S23+
+    {"w": 412, "h": 915, "avail_w": 412, "avail_h": 915, "dpr": 3.5},   # Galaxy S23 Ultra
+    # ━━━ Samsung Galaxy A Series ━━━
+    {"w": 412, "h": 915, "avail_w": 412, "avail_h": 915, "dpr": 2.625}, # Galaxy A55
+    {"w": 412, "h": 883, "avail_w": 412, "avail_h": 883, "dpr": 2.625}, # Galaxy A54
+    {"w": 393, "h": 851, "avail_w": 393, "avail_h": 851, "dpr": 2.75},  # Galaxy A35
+    {"w": 384, "h": 854, "avail_w": 384, "avail_h": 854, "dpr": 2.0},   # Galaxy A25
+    # ━━━ Samsung Galaxy Z Fold/Flip ━━━
+    {"w": 360, "h": 816, "avail_w": 360, "avail_h": 816, "dpr": 3},     # Galaxy Z Fold 5 (cover)
+    {"w": 412, "h": 914, "avail_w": 412, "avail_h": 914, "dpr": 2.625}, # Galaxy Z Fold 5 (inner)
+    {"w": 360, "h": 748, "avail_w": 360, "avail_h": 748, "dpr": 3},     # Galaxy Z Flip 5
+    # ━━━ Google Pixel ━━━
+    {"w": 412, "h": 915, "avail_w": 412, "avail_h": 883, "dpr": 2.625}, # Pixel 9 Pro XL
+    {"w": 412, "h": 915, "avail_w": 412, "avail_h": 883, "dpr": 2.625}, # Pixel 8 Pro
+    {"w": 393, "h": 851, "avail_w": 393, "avail_h": 819, "dpr": 2.75},  # Pixel 8
+    {"w": 412, "h": 892, "avail_w": 412, "avail_h": 860, "dpr": 2.625}, # Pixel 7 Pro
+    {"w": 393, "h": 851, "avail_w": 393, "avail_h": 819, "dpr": 2.75},  # Pixel 7
+    # ━━━ Xiaomi / Redmi ━━━
+    {"w": 393, "h": 873, "avail_w": 393, "avail_h": 873, "dpr": 2.75},  # Xiaomi 14
+    {"w": 412, "h": 915, "avail_w": 412, "avail_h": 915, "dpr": 3.5},   # Xiaomi 14 Ultra
+    {"w": 393, "h": 873, "avail_w": 393, "avail_h": 873, "dpr": 2.75},  # Xiaomi 13
+    {"w": 360, "h": 800, "avail_w": 360, "avail_h": 800, "dpr": 3},     # Redmi Note 13 Pro
+    {"w": 393, "h": 873, "avail_w": 393, "avail_h": 873, "dpr": 2.75},  # Redmi Note 12 Pro+
+    {"w": 360, "h": 800, "avail_w": 360, "avail_h": 800, "dpr": 2},     # Redmi Note 12
+    # ━━━ OnePlus ━━━
+    {"w": 412, "h": 915, "avail_w": 412, "avail_h": 883, "dpr": 3.5},   # OnePlus 12
+    {"w": 412, "h": 915, "avail_w": 412, "avail_h": 883, "dpr": 2.625}, # OnePlus 11
+    {"w": 412, "h": 915, "avail_w": 412, "avail_h": 883, "dpr": 2.625}, # OnePlus 10 Pro
+    # ━━━ OPPO / Realme / Vivo ━━━
+    {"w": 412, "h": 915, "avail_w": 412, "avail_h": 915, "dpr": 2.625}, # OPPO Find X7 Ultra
+    {"w": 360, "h": 800, "avail_w": 360, "avail_h": 800, "dpr": 3},     # OPPO Reno 11
+    {"w": 393, "h": 873, "avail_w": 393, "avail_h": 873, "dpr": 2.75},  # Realme GT 5 Pro
+    {"w": 360, "h": 800, "avail_w": 360, "avail_h": 800, "dpr": 2},     # Realme 12 Pro
+    {"w": 412, "h": 915, "avail_w": 412, "avail_h": 915, "dpr": 2.625}, # vivo X100 Pro
+    {"w": 360, "h": 800, "avail_w": 360, "avail_h": 800, "dpr": 2.75},  # vivo V30
+    # ━━━ Huawei / Honor ━━━
+    {"w": 360, "h": 780, "avail_w": 360, "avail_h": 780, "dpr": 3},     # Huawei Mate 50 Pro
+    {"w": 360, "h": 800, "avail_w": 360, "avail_h": 800, "dpr": 3},     # Honor Magic6 Pro
+    {"w": 360, "h": 780, "avail_w": 360, "avail_h": 780, "dpr": 2.75},  # Honor 90
+    # ━━━ Sony Xperia ━━━
+    {"w": 360, "h": 840, "avail_w": 360, "avail_h": 840, "dpr": 3},     # Xperia 1 V (21:9)
+    {"w": 360, "h": 780, "avail_w": 360, "avail_h": 780, "dpr": 2.5},   # Xperia 5 V
+    # ━━━ Motorola ━━━
+    {"w": 412, "h": 915, "avail_w": 412, "avail_h": 883, "dpr": 2.625}, # Motorola Edge 50 Ultra
+    {"w": 360, "h": 800, "avail_w": 360, "avail_h": 800, "dpr": 2.75},  # moto g84
+    # ━━━ Nothing Phone ━━━
+    {"w": 412, "h": 915, "avail_w": 412, "avail_h": 883, "dpr": 2.625}, # Nothing Phone 2
+    {"w": 393, "h": 873, "avail_w": 393, "avail_h": 873, "dpr": 2.75},  # Nothing Phone 1
+    # ━━━ Budget phones (Infinix, Tecno, Blackview, etc.) ━━━
+    {"w": 360, "h": 800, "avail_w": 360, "avail_h": 800, "dpr": 2},
+    {"w": 360, "h": 780, "avail_w": 360, "avail_h": 780, "dpr": 2},
+    {"w": 412, "h": 892, "avail_w": 412, "avail_h": 892, "dpr": 1.75},
+    # ━━━ Samsung Galaxy Tab ━━━
+    {"w": 800, "h": 1280, "avail_w": 800, "avail_h": 1280, "dpr": 2},   # Galaxy Tab S9+
+    {"w": 753, "h": 1205, "avail_w": 753, "avail_h": 1205, "dpr": 2},   # Galaxy Tab S9
 ]
 
 _SCREEN_RESOLUTIONS = [
+    # ━━━ Desktop monitors ━━━
     {"w": 1920, "h": 1080, "avail_w": 1920, "avail_h": 1040, "dpr": 1},
+    {"w": 1920, "h": 1080, "avail_w": 1920, "avail_h": 1032, "dpr": 1},
     {"w": 2560, "h": 1440, "avail_w": 2560, "avail_h": 1400, "dpr": 1},
+    {"w": 3840, "h": 2160, "avail_w": 3840, "avail_h": 2120, "dpr": 1},
+    {"w": 1920, "h": 1200, "avail_w": 1920, "avail_h": 1160, "dpr": 1},
+    {"w": 2560, "h": 1080, "avail_w": 2560, "avail_h": 1040, "dpr": 1},   # Ultrawide
+    {"w": 3440, "h": 1440, "avail_w": 3440, "avail_h": 1400, "dpr": 1},   # Ultrawide QHD
+    {"w": 1280, "h": 1024, "avail_w": 1280, "avail_h": 984, "dpr": 1},    # 5:4 monitor
+    # ━━━ Laptops (Windows scaling) ━━━
     {"w": 1920, "h": 1080, "avail_w": 1920, "avail_h": 1032, "dpr": 1.25},
     {"w": 1536, "h": 864, "avail_w": 1536, "avail_h": 824, "dpr": 1.25},
-    {"w": 3840, "h": 2160, "avail_w": 3840, "avail_h": 2120, "dpr": 1.5},
-    {"w": 1440, "h": 900, "avail_w": 1440, "avail_h": 875, "dpr": 2},   # MacBook
-    {"w": 2560, "h": 1600, "avail_w": 2560, "avail_h": 1575, "dpr": 2},  # MacBook Pro
-    {"w": 1680, "h": 1050, "avail_w": 1680, "avail_h": 1025, "dpr": 2},  # iMac
+    {"w": 1366, "h": 768, "avail_w": 1366, "avail_h": 728, "dpr": 1},     # Common laptop
+    {"w": 1600, "h": 900, "avail_w": 1600, "avail_h": 860, "dpr": 1},     # HD+ laptop
+    {"w": 1280, "h": 720, "avail_w": 1280, "avail_h": 680, "dpr": 1},     # HD laptop
+    {"w": 3840, "h": 2160, "avail_w": 3840, "avail_h": 2120, "dpr": 1.5}, # 4K laptop scaled
+    # ━━━ macOS / Retina displays ━━━
+    {"w": 1440, "h": 900, "avail_w": 1440, "avail_h": 875, "dpr": 2},     # MacBook Air 13"
+    {"w": 2560, "h": 1600, "avail_w": 2560, "avail_h": 1575, "dpr": 2},   # MacBook Pro 13"
+    {"w": 1680, "h": 1050, "avail_w": 1680, "avail_h": 1025, "dpr": 2},   # MacBook Pro 15"
+    {"w": 1512, "h": 982, "avail_w": 1512, "avail_h": 957, "dpr": 2},     # MacBook Pro 14" M-series
+    {"w": 1728, "h": 1117, "avail_w": 1728, "avail_h": 1092, "dpr": 2},   # MacBook Pro 16" M-series
+    {"w": 2880, "h": 1800, "avail_w": 2880, "avail_h": 1775, "dpr": 2},   # MacBook Pro 15" Retina
+    {"w": 3024, "h": 1964, "avail_w": 3024, "avail_h": 1939, "dpr": 2},   # MacBook Pro 14" native
+    {"w": 3456, "h": 2234, "avail_w": 3456, "avail_h": 2209, "dpr": 2},   # MacBook Pro 16" native
+    {"w": 5120, "h": 2880, "avail_w": 5120, "avail_h": 2855, "dpr": 2},   # iMac 5K
 ]
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -467,9 +700,22 @@ def _get_client_hints(ua: str, platform: str) -> dict:
     """Generate User-Agent Client Hints (brands, platformVersion, architecture)."""
     browser = _detect_browser_info(ua)
     v = browser["version"]
+    is_mobile = browser["mobile"]
     
     # Determine architecture based on platform
-    if platform == "Win32":
+    if platform == "Linux armv81" or platform == "Linux armv8l":
+        # Android mobile
+        architecture = "arm"
+        arch_bitness = "64"
+        # Android version from UA → "14.0.0" style
+        android_match = re.search(r'Android (\d+)', ua)
+        android_ver = android_match.group(1) if android_match else "14"
+        platform_version = f"{android_ver}.0.0"
+    elif platform in ("iPhone", "iPad"):
+        architecture = "arm"
+        arch_bitness = "64"
+        platform_version = "18.4.0"
+    elif platform == "Win32":
         architecture = "x86"
         arch_bitness = "64"
         platform_version = "15.0.0"  # Windows 11
@@ -477,10 +723,18 @@ def _get_client_hints(ua: str, platform: str) -> dict:
         architecture = "arm" if "Apple" in ua and random.random() > 0.3 else "x86"
         arch_bitness = "64"
         platform_version = "14.0.0"  # macOS Sonoma
-    else:  # Linux
+    else:  # Linux desktop
         architecture = "x86"
         arch_bitness = "64"
         platform_version = "6.8.0"  # Linux kernel version
+    
+    # Extract device model from UA for Android phones
+    model = ""
+    if is_mobile and "Android" in ua:
+        # Extract model: "Android 14; SM-S928B)" → "SM-S928B"
+        model_match = re.search(r'Android [^;]+;\s*([^)]+)', ua)
+        if model_match:
+            model = model_match.group(1).strip()
     
     # GREASE brand handling
     g_brand, g_ver = _get_grease_brand(v)
@@ -497,13 +751,13 @@ def _get_client_hints(ua: str, platform: str) -> dict:
             {"brand": g_brand, "version": g_ver},
             {"brand": "Opera", "version": v}
         ]
-    elif browser["browser"] == "Firefox":
+    elif browser["browser"] in ("Firefox",):
         # Firefox doesn't send brands
         brands = []
-    elif browser["browser"] == "Safari":
-        # Safari sends limited brands
+    elif browser["browser"] in ("Safari", "CriOS"):
+        # Safari / CriOS sends limited brands (iOS WebKit)
         brands = [{"brand": "Safari", "version": v}]
-    else:  # Chrome
+    else:  # Chrome (desktop + Android)
         brands = [
             {"brand": "Chromium", "version": v},
             {"brand": g_brand, "version": g_ver},
@@ -515,8 +769,8 @@ def _get_client_hints(ua: str, platform: str) -> dict:
         "platform_version": platform_version,
         "architecture": architecture,
         "arch_bitness": arch_bitness,
-        "model": "",  # Empty for desktop
-        "mobile": False,
+        "model": model,
+        "mobile": is_mobile,
     }
 
 
@@ -524,49 +778,98 @@ def generate_device_fingerprint(user_agent: str, user_id: int = None) -> dict:
     """Generate a fresh device fingerprint per attempt (rotation).
     
     Setiap panggilan menghasilkan fingerprint baru - tidak ada caching per user.
-    Hanya menyimpan metode fingerprinting yang diperlukan:
+    Supports BOTH desktop AND mobile devices:
+    - Desktop: Windows/macOS/Linux with discrete GPU (NVIDIA/AMD/Intel)
+    - Mobile: Android/iOS with mobile GPU (Adreno/Mali/Apple GPU)
+    
+    Fingerprinting methods:
     - Navigator: UA, Platform, Hardware Concurrency, Device Memory, Language
-    - User-Agent Data: Client Hints API (brands, platformVersion, architecture)
+    - User-Agent Data: Client Hints API (brands, platformVersion, architecture, model)
     - Canvas: Position-based deterministic noise
-    - WebGL: GPU vendor/renderer (Intel/NVIDIA/AMD)
+    - WebGL: GPU vendor/renderer (Desktop: Intel/NVIDIA/AMD, Mobile: Adreno/Mali/Apple)
     - AudioContext: Imperceptible noise (~-80dB)
     - Screen: Resolution, colorDepth, pixelRatio
     - Plugins/MimeTypes: PDF viewer consistency
     """
-    # Pick GPU renderer based on UA platform
-    is_mac = "Macintosh" in user_agent or "Mac OS X" in user_agent
-    is_linux = "Linux" in user_agent and "Android" not in user_agent
+    # Detect device type from UA
+    is_mobile = _is_mobile_ua(user_agent)
+    is_iphone = "iPhone" in user_agent
+    is_ipad = "iPad" in user_agent
+    is_ios = is_iphone or is_ipad
+    is_android = "Android" in user_agent
+    is_mac = "Macintosh" in user_agent or ("Mac OS X" in user_agent and not is_ios)
+    is_linux = "Linux" in user_agent and not is_android
     
-    if is_mac:
-        gpu_pool = [g for g in _WEBGL_RENDERERS if "Apple" in g["renderer"] or "Apple" in g["vendor"]]
-        screen_pool = [s for s in _SCREEN_RESOLUTIONS if s["dpr"] == 2]
-    elif is_linux:
-        gpu_pool = [g for g in _WEBGL_RENDERERS if "OpenGL 4.5" in g["renderer"]]
-        screen_pool = [s for s in _SCREEN_RESOLUTIONS if s["dpr"] <= 1]
+    if is_mobile:
+        # ━━━ Mobile device fingerprint ━━━
+        if is_ios:
+            # iPhone/iPad — Apple GPU
+            gpu_pool = [g for g in _MOBILE_WEBGL_RENDERERS if "Apple" in g["vendor"]]
+            if is_ipad:
+                screen_pool = [s for s in _MOBILE_SCREEN_RESOLUTIONS if s["w"] >= 750]  # Tablet size
+            else:
+                screen_pool = [s for s in _MOBILE_SCREEN_RESOLUTIONS if 370 <= s["w"] <= 440 and s["h"] < 960]  # Phone size
+        else:
+            # Android — Adreno or Mali GPU
+            gpu_pool = [g for g in _MOBILE_WEBGL_RENDERERS if g["vendor"] in ("Qualcomm", "ARM", "Imagination Technologies")]
+            screen_pool = [s for s in _MOBILE_SCREEN_RESOLUTIONS if s["w"] <= 450 and s["h"] < 960]  # Phone size
+        
+        gpu = random.choice(gpu_pool) if gpu_pool else random.choice(_MOBILE_WEBGL_RENDERERS)
+        screen = random.choice(screen_pool) if screen_pool else random.choice(_MOBILE_SCREEN_RESOLUTIONS)
+        
+        # Platform string
+        if is_ios:
+            plat = "iPhone" if is_iphone else "iPad"
+        else:
+            plat = "Linux armv81"  # Standard Android platform string
+        
+        # Mobile hardware — realistic specs
+        if is_ios:
+            hw_concurrency = random.choice([6, 6, 6, 8])  # A15=6, A16=6, A17Pro=6
+            device_memory = random.choice([4, 6, 8])       # iPhone RAM
+            color_depth = 24
+        else:
+            # Android — varies by tier
+            hw_concurrency = random.choice([4, 6, 8, 8, 8])  # Most flagships = 8
+            device_memory = random.choice([4, 6, 8, 8, 12])   # Android RAM
+            color_depth = 24
     else:
-        gpu_pool = [g for g in _WEBGL_RENDERERS if "Direct3D11" in g["renderer"]]
-        screen_pool = [s for s in _SCREEN_RESOLUTIONS if s["dpr"] <= 1.5]
-    
-    gpu = random.choice(gpu_pool) if gpu_pool else random.choice(_WEBGL_RENDERERS)
-    screen = random.choice(screen_pool) if screen_pool else random.choice(_SCREEN_RESOLUTIONS)
-    
-    # Platform string must match UA
-    if is_mac:
-        plat = "MacIntel"
-    elif is_linux:
-        plat = "Linux x86_64"
-    else:
-        plat = "Win32"
+        # ━━━ Desktop device fingerprint ━━━
+        if is_mac:
+            gpu_pool = [g for g in _WEBGL_RENDERERS if "Apple" in g["renderer"] or "Apple" in g["vendor"]]
+            screen_pool = [s for s in _SCREEN_RESOLUTIONS if s["dpr"] == 2]
+        elif is_linux:
+            gpu_pool = [g for g in _WEBGL_RENDERERS if "OpenGL 4.5" in g["renderer"]]
+            screen_pool = [s for s in _SCREEN_RESOLUTIONS if s["dpr"] <= 1]
+        else:
+            gpu_pool = [g for g in _WEBGL_RENDERERS if "Direct3D11" in g["renderer"]]
+            screen_pool = [s for s in _SCREEN_RESOLUTIONS if s["dpr"] <= 1.5]
+        
+        gpu = random.choice(gpu_pool) if gpu_pool else random.choice(_WEBGL_RENDERERS)
+        screen = random.choice(screen_pool) if screen_pool else random.choice(_SCREEN_RESOLUTIONS)
+        
+        # Platform string must match UA
+        if is_mac:
+            plat = "MacIntel"
+        elif is_linux:
+            plat = "Linux x86_64"
+        else:
+            plat = "Win32"
+        
+        hw_concurrency = random.choice([4, 6, 8, 10, 12, 16])
+        device_memory = random.choice([4, 8, 16, 32])
+        color_depth = 30 if is_mac else 24
     
     # Generate fresh fingerprints per attempt (NO CACHING)
     profile = {
         # ━━━ Navigator ━━━
         "user_agent": user_agent,
         "platform": plat,
-        "hardware_concurrency": random.choice([4, 6, 8, 10, 12, 16]),
-        "device_memory": random.choice([4, 8, 16, 32]),
+        "hardware_concurrency": hw_concurrency,
+        "device_memory": device_memory,
         "language": "en-US",
         "languages": ["en-US", "en"],
+        "mobile": is_mobile,
         
         # ━━━ User-Agent Data (Client Hints) ━━━
         "client_hints": _get_client_hints(user_agent, plat),
@@ -588,7 +891,7 @@ def generate_device_fingerprint(user_agent: str, user_id: int = None) -> dict:
         "avail_width": screen["avail_w"],
         "avail_height": screen["avail_h"],
         "device_pixel_ratio": screen["dpr"],
-        "color_depth": 30 if is_mac else 24,
+        "color_depth": color_depth,
         
         # ━━━ Plugins/MimeTypes (PDF viewer consistency) ━━━
         "pdf_viewer": _get_pdf_viewer_consistency(),
@@ -764,8 +1067,13 @@ async def send_m_stripe_beacon(fp: dict, checkout_url: str, tls_profile: str, us
             beacon_headers["sec-ch-ua"] = f'"Chromium";v="{v}", "{g_brand}";v="{g_ver}", "Opera";v="{v}"'
         else:
             beacon_headers["sec-ch-ua"] = f'"Chromium";v="{v}", "{g_brand}";v="{g_ver}", "Google Chrome";v="{v}"'
-        beacon_headers["sec-ch-ua-mobile"] = "?0"
-        beacon_headers["sec-ch-ua-platform"] = f'"{browser["platform"]}"'
+        beacon_headers["sec-ch-ua-mobile"] = "?1" if browser.get("mobile") else "?0"
+        if browser["platform"] == "Android":
+            beacon_headers["sec-ch-ua-platform"] = '"Android"'
+        elif browser["platform"] == "iOS":
+            beacon_headers["sec-ch-ua-platform"] = '"iOS"'
+        else:
+            beacon_headers["sec-ch-ua-platform"] = f'"{browser["platform"]}"'
     
     now = int(time.time() * 1000)
     
