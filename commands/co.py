@@ -2,8 +2,8 @@ import time
 import re
 import asyncio
 import random
-from aiogram import Router
-from aiogram.types import Message
+from aiogram import Router, F
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, CopyTextButton
 from aiogram.filters import Command
 from aiogram.enums import ParseMode
 
@@ -27,6 +27,25 @@ from utils.ratelimit import check_rate_limit, get_cooldown_seconds, MAX_CARDS_PE
 from utils.stripe import generate_session_context, warm_checkout_session, send_m_stripe_beacon
 
 router = Router()
+
+# ━━━ Stop tracking per user ━━━
+_stop_requests: dict[int, bool] = {}
+
+
+@router.callback_query(F.data.startswith("stop_charge:"))
+async def stop_charge_callback(callback: CallbackQuery):
+    """Handle stop button press during charging."""
+    user_id = int(callback.data.split(":")[1])
+    if callback.from_user.id != user_id:
+        await callback.answer("❌ Only the requester can stop this.", show_alert=True)
+        return
+    _stop_requests[user_id] = True
+    await callback.answer("🛑 Stopping after current card...", show_alert=False)
+    # Remove the stop button immediately
+    try:
+        await callback.message.edit_reply_markup(reply_markup=None)
+    except Exception:
+        pass
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -703,22 +722,41 @@ async def co_handler(msg: Message):
 
     bin_display = f"\n「❃」 𝗕𝗜𝗡 : <code>{bin_used}</code>" if bin_used else ""
 
+    # Build stop button for multi-card charging
+    stop_kb = None
+    if len(cards) > 1:
+        stop_kb = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(
+                text="🛑 Stop",
+                callback_data=f"stop_charge:{user_id}"
+            )]
+        ])
+    # Reset stop flag
+    _stop_requests[user_id] = False
+
     await processing_msg.edit_text(
         f"<blockquote><code>「 𝗖𝗵𝗮𝗿𝗴𝗶𝗻𝗴 {price_str} 」</code></blockquote>\n\n"
         f"<blockquote>「❃」 𝗦𝗲𝗿𝘃𝗲𝗿 : <code>{SERVER_DISPLAY}</code>\n"
         f"「❃」 𝗣𝗿𝗼𝘅𝘆 : <code>{proxy_display}</code>{bin_display}\n"
         f"「❃」 𝗖𝗮𝗿𝗱𝘀 : <code>{len(cards)}</code>\n"
         f"「❃」 𝗦𝘁𝗮𝘁𝘂𝘀 : <code>Starting...</code></blockquote>",
-        parse_mode=ParseMode.HTML
+        parse_mode=ParseMode.HTML,
+        reply_markup=stop_kb
     )
 
     results = []
     charged_card = None
     cancelled = False
+    stopped_by_user = False
     check_interval = 5
     last_update = time.perf_counter()
 
     for i, card in enumerate(cards):
+        # Check if user pressed stop button
+        if _stop_requests.get(user_id, False):
+            stopped_by_user = True
+            break
+
         # Random delay between cards (1.5–3.5s) to mimic human behavior
         if i > 0:
             await asyncio.sleep(random.uniform(1.5, 3.5))
@@ -761,10 +799,21 @@ async def co_handler(msg: Message):
             progress_lines.append(f"  💀 {errors}")
             progress_lines.append(f"</blockquote>")
 
+            # Keep stop button on progress updates
+            progress_kb = None
+            if len(cards) > 1 and not _stop_requests.get(user_id, False):
+                progress_kb = InlineKeyboardMarkup(inline_keyboard=[
+                    [InlineKeyboardButton(
+                        text="🛑 Stop",
+                        callback_data=f"stop_charge:{user_id}"
+                    )]
+                ])
+
             try:
                 await processing_msg.edit_text(
                     "".join(progress_lines),
-                    parse_mode=ParseMode.HTML
+                    parse_mode=ParseMode.HTML,
+                    reply_markup=progress_kb
                 )
             except Exception:
                 pass
@@ -774,6 +823,15 @@ async def co_handler(msg: Message):
             break
         if result['status'] == 'SESSION_EXPIRED':
             break
+
+    # Clean up stop flag
+    _stop_requests.pop(user_id, None)
+
+    # Remove stop button after charging ends
+    try:
+        await processing_msg.edit_reply_markup(reply_markup=None)
+    except Exception:
+        pass
 
     total_time = round(time.perf_counter() - start_time, 2)
 
@@ -831,7 +889,6 @@ async def co_handler(msg: Message):
             response += f"\n\n🔗 <a href=\"{checkout_data['success_url']}\">Open Success Page</a>"
 
         # Copy button with card details
-        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CopyTextButton
         copy_kb = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(
                 text="📋 Copy Card",
@@ -877,7 +934,11 @@ async def co_handler(msg: Message):
         merchant = checkout_data['merchant'] or 'Unknown'
         product = checkout_data['product'] or 'N/A'
 
-        if cancelled:
+        if stopped_by_user:
+            header_emoji = "🛑"
+            header_text = "𝗦𝘁𝗼𝗽𝗽𝗲𝗱 𝗯𝘆 𝗨𝘀𝗲𝗿"
+            stop_reason = "Manually stopped by user"
+        elif cancelled:
             header_emoji = "⛔"
             header_text = "𝗦𝗲𝘀𝘀𝗶𝗼𝗻 𝗖𝗮𝗻𝗰𝗲𝗹𝗹𝗲𝗱"
             stop_reason = "Checkout session is no longer active"
