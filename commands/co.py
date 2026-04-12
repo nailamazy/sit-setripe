@@ -11,6 +11,7 @@ from config import OWNER_ID
 from utils.constants import (
     SERVER_DISPLAY, CMD_NAME, STATUS_EMOJIS,
     get_currency_symbol, format_time, get_country_from_currency,
+    BILLING_ADDRESSES_BY_COUNTRY, get_random_billing,
 )
 from utils.access import check_access
 from utils.card import parse_cards, generate_cards_from_bin, is_bin_input
@@ -31,6 +32,48 @@ router = Router()
 # ━━━ Stop tracking per user ━━━
 _stop_requests: dict[int, bool] = {}
 
+# ━━━ Pending checkout — stores state while waiting for country selection ━━━
+_pending_checkout: dict[int, dict] = {}
+
+# Country flag emojis
+_COUNTRY_FLAGS = {
+    "US": "🇺🇸", "GB": "🇬🇧", "CA": "🇨🇦", "AU": "🇦🇺", "DE": "🇩🇪",
+    "FR": "🇫🇷", "JP": "🇯🇵", "SG": "🇸🇬", "NL": "🇳🇱", "IN": "🇮🇳",
+    "BR": "🇧🇷", "IT": "🇮🇹", "ES": "🇪🇸", "IE": "🇮🇪", "SE": "🇸🇪",
+    "CH": "🇨🇭", "NZ": "🇳🇿", "HK": "🇭🇰", "MY": "🇲🇾", "MX": "🇲🇽",
+    "MO": "🇲🇴", "DK": "🇩🇰", "NO": "🇳🇴", "FI": "🇫🇮", "AT": "🇦🇹",
+    "BE": "🇧🇪", "PT": "🇵🇹", "PL": "🇵🇱", "TH": "🇹🇭", "PH": "🇵🇭",
+    "ID": "🇮🇩", "AE": "🇦🇪",
+}
+
+
+def _build_country_keyboard(user_id: int, auto_country: str) -> InlineKeyboardMarkup:
+    """Build inline keyboard with country options for billing address."""
+    rows = []
+    # Auto-detect button first
+    flag = _COUNTRY_FLAGS.get(auto_country, "🌐")
+    rows.append([
+        InlineKeyboardButton(
+            text=f"⚡ Auto ({flag} {auto_country})",
+            callback_data=f"country:{user_id}:{auto_country}"
+        )
+    ])
+    # All available countries in grid (4 per row)
+    countries = list(BILLING_ADDRESSES_BY_COUNTRY.keys())
+    row = []
+    for cc in countries:
+        flag = _COUNTRY_FLAGS.get(cc, "🏳️")
+        row.append(InlineKeyboardButton(
+            text=f"{flag} {cc}",
+            callback_data=f"country:{user_id}:{cc}"
+        ))
+        if len(row) == 4:
+            rows.append(row)
+            row = []
+    if row:
+        rows.append(row)
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
 
 @router.callback_query(F.data.startswith("stop_charge:"))
 async def stop_charge_callback(callback: CallbackQuery):
@@ -46,6 +89,46 @@ async def stop_charge_callback(callback: CallbackQuery):
         await callback.message.edit_reply_markup(reply_markup=None)
     except Exception:
         pass
+
+
+@router.callback_query(F.data.startswith("country:"))
+async def country_select_callback(callback: CallbackQuery):
+    """Handle country selection for billing address."""
+    parts = callback.data.split(":")
+    user_id = int(parts[1])
+    selected_country = parts[2]
+
+    if callback.from_user.id != user_id:
+        await callback.answer("❌ Only the requester can select.", show_alert=True)
+        return
+
+    pending = _pending_checkout.pop(user_id, None)
+    if not pending:
+        await callback.answer("❌ Session expired, please retry.", show_alert=True)
+        return
+
+    await callback.answer(f"✅ {selected_country} selected")
+
+    # Update billing with selected country
+    session_ctx = pending["session_ctx"]
+    session_ctx["billing"] = get_random_billing(selected_country)
+    flag = _COUNTRY_FLAGS.get(selected_country, "🏳️")
+    print(f"[DEBUG] User selected billing: {flag} {selected_country}, name={session_ctx['billing']['name']}")
+
+    # Continue charging with selected country
+    await _run_charging(
+        msg_obj=callback.message,
+        processing_msg=callback.message,
+        user_id=user_id,
+        cards=pending["cards"],
+        checkout_data=pending["checkout_data"],
+        session_ctx=session_ctx,
+        alive_proxies=pending["alive_proxies"],
+        init_proxy_raw=pending["init_proxy_raw"],
+        proxy_display=pending["proxy_display"],
+        bin_used=pending["bin_used"],
+        start_time=pending["start_time"],
+    )
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -719,8 +802,61 @@ async def co_handler(msg: Message):
     currency = checkout_data.get('currency', '')
     sym = get_currency_symbol(currency)
     price_str = f"{sym}{checkout_data['price']:.2f} {currency}" if checkout_data['price'] else "N/A"
+    auto_country = get_country_from_currency(currency)
 
     bin_display = f"\n「❃」 𝗕𝗜𝗡 : <code>{bin_used}</code>" if bin_used else ""
+
+    # ━━━ Show country picker for billing address ━━━
+    country_kb = _build_country_keyboard(user_id, auto_country)
+
+    await processing_msg.edit_text(
+        f"<blockquote><code>「 {price_str} 」</code></blockquote>\n\n"
+        f"<blockquote>「❃」 𝗦𝗲𝗿𝘃𝗲𝗿 : <code>{SERVER_DISPLAY}</code>\n"
+        f"「❃」 𝗣𝗿𝗼𝘅𝘆 : <code>{proxy_display}</code>{bin_display}\n"
+        f"「❃」 𝗖𝗮𝗿𝗱𝘀 : <code>{len(cards)}</code>\n"
+        f"「❃」 𝗔𝘂𝘁𝗼 𝗖𝗼𝘂𝗻𝘁𝗿𝘆 : <code>{auto_country}</code></blockquote>\n\n"
+        f"<blockquote>🌍 <b>Select Billing Country :</b></blockquote>",
+        parse_mode=ParseMode.HTML,
+        reply_markup=country_kb
+    )
+
+    # Store state for callback
+    _pending_checkout[user_id] = {
+        "cards": cards,
+        "checkout_data": checkout_data,
+        "session_ctx": session_ctx,
+        "alive_proxies": alive_proxies,
+        "init_proxy_raw": init_proxy_raw,
+        "proxy_display": proxy_display,
+        "bin_used": bin_used,
+        "start_time": start_time,
+    }
+    # Done — charging continues in country_select_callback
+
+
+async def _run_charging(
+    msg_obj,
+    processing_msg,
+    user_id: int,
+    cards: list,
+    checkout_data: dict,
+    session_ctx: dict,
+    alive_proxies: list,
+    init_proxy_raw,
+    proxy_display: str,
+    bin_used: str,
+    start_time: float,
+):
+    """Execute the charging loop — called after country selection."""
+    currency = checkout_data.get('currency', '')
+    sym = get_currency_symbol(currency)
+    price_str = f"{sym}{checkout_data['price']:.2f} {currency}" if checkout_data['price'] else "N/A"
+
+    bin_display = f"\n「❃」 𝗕𝗜𝗡 : <code>{bin_used}</code>" if bin_used else ""
+
+    billing = session_ctx.get("billing", {})
+    billing_flag = _COUNTRY_FLAGS.get(billing.get("country", ""), "🏳️")
+    billing_info = f"{billing_flag} {billing.get('country', 'N/A')}"
 
     # Build stop button for multi-card charging
     stop_kb = None
@@ -738,6 +874,7 @@ async def co_handler(msg: Message):
         f"<blockquote><code>「 𝗖𝗵𝗮𝗿𝗴𝗶𝗻𝗴 {price_str} 」</code></blockquote>\n\n"
         f"<blockquote>「❃」 𝗦𝗲𝗿𝘃𝗲𝗿 : <code>{SERVER_DISPLAY}</code>\n"
         f"「❃」 𝗣𝗿𝗼𝘅𝘆 : <code>{proxy_display}</code>{bin_display}\n"
+        f"「❃」 𝗕𝗶𝗹𝗹𝗶𝗻𝗴 : <code>{billing_info}</code>\n"
         f"「❃」 𝗖𝗮𝗿𝗱𝘀 : <code>{len(cards)}</code>\n"
         f"「❃」 𝗦𝘁𝗮𝘁𝘂𝘀 : <code>Starting...</code></blockquote>",
         parse_mode=ParseMode.HTML,
@@ -757,9 +894,15 @@ async def co_handler(msg: Message):
             stopped_by_user = True
             break
 
-        # Random delay between cards (1.5–3.5s) to mimic human behavior
+        # Behavioral delay between cards - human-like interval
         if i > 0:
-            await asyncio.sleep(random.uniform(1.5, 3.5))
+            from utils.behavioral import HumanBehavior
+            # Waktu antar kartu: 3-8 detik (seperti user mengambil kartu lain)
+            inter_card_delay = HumanBehavior.gaussian_clamp(
+                mean=5.0, std=1.5, min_val=3.0, max_val=8.0
+            )
+            print(f"[BEHAVIOR] Inter-card delay: {inter_card_delay:.2f}s")
+            await asyncio.sleep(inter_card_delay)
 
         if len(cards) > 1 and i > 0 and i % check_interval == 0:
             is_active = await check_checkout_active(checkout_data['pk'], checkout_data['cs'])
@@ -842,8 +985,18 @@ async def co_handler(msg: Message):
     three_ds_count = sum(1 for r in results if r['status'] == '3DS')
     captcha_count = sum(1 for r in results if r['status'] == 'SOLVED CAPTCHA')
     error_count = sum(1 for r in results if r['status'] in ['ERROR', 'FAILED', 'UNKNOWN'])
-    req_name = msg.from_user.full_name or msg.from_user.username or 'Unknown'
-    req_user = f"@{msg.from_user.username}" if msg.from_user.username else req_name
+
+    # Try to get requester info from message
+    try:
+        if hasattr(msg_obj, 'from_user') and msg_obj.from_user:
+            req_name = msg_obj.from_user.full_name or msg_obj.from_user.username or 'Unknown'
+            req_user = f"@{msg_obj.from_user.username}" if msg_obj.from_user.username else req_name
+        else:
+            req_name = 'Unknown'
+            req_user = 'Unknown'
+    except Exception:
+        req_name = 'Unknown'
+        req_user = 'Unknown'
 
     if charged_card:
         # ━━━ HIT FORMAT — Premium charged card display ━━━
@@ -1030,3 +1183,4 @@ async def co_handler(msg: Message):
         )
 
         await processing_msg.edit_text(response, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
+
