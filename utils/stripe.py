@@ -1158,6 +1158,181 @@ async def send_m_stripe_beacon(fp: dict, checkout_url: str, tls_profile: str, us
         return False, {}, {}
 
 
+async def send_r_stripe_events(
+    fp: dict,
+    checkout_url: str,
+    tls_profile: str,
+    user_agent: str,
+    cookies_str: str,
+    device_fp: dict = None,
+    proxy: str = None,
+    payment_user_agent: str = None,
+):
+    """Send r.stripe.com/0 Radar telemetry — real Stripe.js lifecycle events.
+
+    Real Stripe Checkout sends individual JSON events to r.stripe.com/0.
+    Format is same as m.stripe.com: v2 envelope with tag/src/pid/data.
+
+    Key events a real checkout sends:
+      1. checkout-js pageload (on page load)
+      2. checkout-js element interaction (before submit)
+
+    This is NON-BLOCKING / best-effort — failures don't stop checkout.
+    """
+    import json
+    import time as _t
+
+    if device_fp is None:
+        device_fp = generate_device_fingerprint(user_agent)
+
+    now_ms = int(_t.time() * 1000)
+
+    # Headers — same origin as Stripe Checkout
+    hdr = {
+        "user-agent": user_agent,
+        "content-type": "application/json",
+        "origin": "https://checkout.stripe.com",
+        "referer": "https://checkout.stripe.com/",
+        "accept": "*/*",
+        "accept-language": "en-US,en;q=0.9",
+    }
+    if cookies_str:
+        hdr["cookie"] = cookies_str
+
+    browser = _detect_browser_info(user_agent)
+    if browser["browser"] in ("Chrome", "Edge", "Opera"):
+        v = browser["version"]
+        g_brand, g_ver = _get_grease_brand(v)
+        if browser["browser"] == "Edge":
+            hdr["sec-ch-ua"] = f'"Chromium";v="{v}", "{g_brand}";v="{g_ver}", "Microsoft Edge";v="{v}"'
+        elif browser["browser"] == "Opera":
+            hdr["sec-ch-ua"] = f'"Chromium";v="{v}", "{g_brand}";v="{g_ver}", "Opera";v="{v}"'
+        else:
+            hdr["sec-ch-ua"] = f'"Chromium";v="{v}", "{g_brand}";v="{g_ver}", "Google Chrome";v="{v}"'
+        hdr["sec-ch-ua-mobile"] = "?1" if browser.get("mobile") else "?0"
+        plat = browser["platform"]
+        if plat == "Android":
+            hdr["sec-ch-ua-platform"] = '"Android"'
+        elif plat == "iOS":
+            hdr["sec-ch-ua-platform"] = '"iOS"'
+        else:
+            hdr["sec-ch-ua-platform"] = f'"{plat}"'
+
+    pua = payment_user_agent or get_random_stripe_js_agent()
+
+    # Build v2 event — same format as m.stripe.com/6
+    event = {
+        "v": 2,
+        "tag": "checkout-elements-inner-card-element-render-complete",
+        "src": "checkout-js",
+        "pid": fp["guid"],
+        "data": {
+            "url": checkout_url,
+            "muid": fp["muid"],
+            "sid": fp["sid"],
+            "paymentUserAgent": pua,
+            "timeSincePageLoad": random.randint(2000, 8000),
+            "livemode": True,
+            "userAgent": user_agent,
+            "screenWidth": device_fp.get("screen_width", 1920),
+            "screenHeight": device_fp.get("screen_height", 1080),
+            "windowWidth": device_fp.get("avail_width", 1920),
+            "windowHeight": device_fp.get("avail_height", 1040),
+            "devicePixelRatio": device_fp.get("device_pixel_ratio", 1),
+            "colorDepth": device_fp.get("color_depth", 24),
+            "platform": device_fp.get("platform", "Win32"),
+            "language": "en-US",
+            "hardwareConcurrency": device_fp.get("hardware_concurrency", 8),
+            "deviceMemory": device_fp.get("device_memory", 8),
+            "pageloadTimestamp": now_ms - random.randint(3000, 10000),
+            "canvasHash": device_fp.get("canvas_hash", ""),
+            "webglVendor": device_fp.get("webgl_vendor", ""),
+            "webglRenderer": device_fp.get("webgl_renderer", ""),
+        },
+    }
+
+    sent = 0
+    try:
+        async with CurlSession(impersonate=tls_profile) as s:
+            # Send main event
+            r = await s.post(
+                "https://r.stripe.com/0",
+                headers=hdr,
+                data=json.dumps(event),
+                timeout=8,
+                proxy=proxy,
+            )
+            sent += 1
+
+            # Send a second event (element focus) after short gap
+            event2 = {
+                "v": 2,
+                "tag": "checkout-elements-inner-payment-element-rendered",
+                "src": "checkout-js",
+                "pid": fp["guid"],
+                "data": {
+                    "url": checkout_url,
+                    "muid": fp["muid"],
+                    "sid": fp["sid"],
+                    "paymentUserAgent": pua,
+                    "timeSincePageLoad": random.randint(4000, 12000),
+                    "livemode": True,
+                    "userAgent": user_agent,
+                    "pageloadTimestamp": now_ms - random.randint(3000, 10000),
+                },
+            }
+            r2 = await s.post(
+                "https://r.stripe.com/0",
+                headers=hdr,
+                data=json.dumps(event2),
+                timeout=8,
+                proxy=proxy,
+            )
+            sent += 1
+
+        print(f"[DEBUG] ✅ r.stripe.com sent {sent} events (HTTP {r.status_code}, {r2.status_code})")
+        return True
+    except Exception as e:
+        print(f"[DEBUG] ⚠️ r.stripe.com error (non-fatal): {str(e)[:60]}")
+        return False
+
+
+def generate_realistic_email(name: str) -> str:
+    """Generate a realistic email address that matches the billing name.
+
+    Avoids the suspicious 'john@example.com' fallback.  Produces patterns
+    commonly seen in real customers (first.last, firstlast99, etc.)
+    """
+    parts = name.strip().split()
+    first = parts[0].lower() if parts else "user"
+    last = parts[-1].lower() if len(parts) > 1 else ""
+
+    domains = [
+        "gmail.com", "yahoo.com", "outlook.com", "hotmail.com",
+        "icloud.com", "protonmail.com", "live.com", "aol.com",
+        "mail.com", "yandex.com",
+    ]
+
+    if last:
+        patterns = [
+            f"{first}.{last}",
+            f"{first}{last}",
+            f"{first}.{last}{random.randint(1, 99)}",
+            f"{first}{last}{random.randint(1, 999)}",
+            f"{first[0]}{last}",
+            f"{first[0]}.{last}",
+            f"{first}_{last}",
+            f"{first}{random.randint(10, 99)}",
+        ]
+    else:
+        patterns = [
+            f"{first}{random.randint(10, 9999)}",
+            f"{first}.{random.randint(1, 99)}",
+        ]
+
+    return f"{random.choice(patterns)}@{random.choice(domains)}"
+
+
 def generate_session_context(user_id: int = None, rotation_per_attempt: bool = True, country: str = None) -> dict:
     """Generate a complete session context for one checkout session.
     
