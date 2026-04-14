@@ -181,7 +181,7 @@ async def get_checkout_info(url: str, tls_profile: str = None, user_agent: str =
                     headers=headers,
                     data=body,
                     proxy=proxy_url,
-                    timeout=20
+                    timeout=5
                 )
                 # Record metrics for telemetry header on next request
                 _init_dur = int((time.perf_counter() - _init_start) * 1000)
@@ -502,7 +502,7 @@ async def charge_card(card: dict, checkout_data: dict, proxy_str: str = None, us
                     headers=headers,
                     data=pm_body,
                     proxy=proxy_url,
-                    timeout=20
+                    timeout=8
                 )
                 _pm_dur = int((time.perf_counter() - _pm_start) * 1000)
                 try:
@@ -571,7 +571,7 @@ async def charge_card(card: dict, checkout_data: dict, proxy_str: str = None, us
                     headers=headers,
                     data=conf_body,
                     proxy=proxy_url,
-                    timeout=25
+                    timeout=10
                 )
                 # Record for next telemetry
                 _conf_dur = int((time.perf_counter() - _conf_start) * 1000)
