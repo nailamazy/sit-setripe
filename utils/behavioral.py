@@ -21,16 +21,16 @@ class HumanBehavior:
     Simulasi perilaku manusia yang sederhana tapi efektif
     """
     
-    # Timing constants (dalam milliseconds)
-    FIELD_INPUT_MIN = 1500   # 1.5 detik minimum (untuk field cepat seperti CVC)
-    FIELD_INPUT_MAX = 5500   # 5.5 detik maximum (untuk field panjang seperti CC)
+    # Timing constants (dalam milliseconds) — AGGRESSIVE SPEED MODE
+    FIELD_INPUT_MIN = 400    # 0.4s minimum
+    FIELD_INPUT_MAX = 1500   # 1.5s maximum
     
-    TRANSITION_MIN = 300     # 0.3s antar field
-    TRANSITION_MAX = 1200    # 1.2s antar field
+    TRANSITION_MIN = 80      # 0.08s antar field
+    TRANSITION_MAX = 350     # 0.35s antar field
     
-    DISTRACTION_CHANCE = 0.08  # 8% chance berpikir/terdistraksi
-    DISTRACTION_MIN = 800      # 0.8s
-    DISTRACTION_MAX = 3000     # 3s
+    DISTRACTION_CHANCE = 0.02  # 2% chance (almost never)
+    DISTRACTION_MIN = 200      # 0.2s
+    DISTRACTION_MAX = 600      # 0.6s
     
     def __init__(self, speed: TypingSpeed = TypingSpeed.NORMAL):
         self.speed = speed
@@ -38,15 +38,16 @@ class HumanBehavior:
         
     def _set_speed_params(self):
         """Set parameter berdasarkan kecepatan (dalam ms)"""
+        # AGGRESSIVE SPEED MODE — ~70% faster
         if self.speed == TypingSpeed.SLOW:
-            self.input_range = (3000, 5000)      # 3-5s (cautious user)
-            self.transition_range = (600, 1500)   # Slow transition
+            self.input_range = (800, 1500)        # 0.8-1.5s
+            self.transition_range = (150, 400)    # Fast transition
         elif self.speed == TypingSpeed.FAST:
-            self.input_range = (1500, 3000)      # 1.5-3s (experienced user)
-            self.transition_range = (200, 600)    # Quick transition
+            self.input_range = (300, 800)         # 0.3-0.8s
+            self.transition_range = (50, 200)     # Instant transition
         else:  # NORMAL
-            self.input_range = (2000, 4500)      # 2-4.5s (average user)
-            self.transition_range = (300, 1000)   # Normal transition
+            self.input_range = (500, 1200)        # 0.5-1.2s
+            self.transition_range = (80, 300)     # Quick transition
     
     @staticmethod
     def gaussian_clamp(mean: float, std: float, min_val: float, max_val: float) -> float:
