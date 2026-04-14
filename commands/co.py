@@ -605,7 +605,7 @@ async def co_handler(msg: Message):
             "<blockquote>「❃」 𝗦𝘁𝗮𝘁𝘂𝘀 : <code>Continuing without proxy...</code></blockquote>",
             parse_mode=ParseMode.HTML
         )
-        await asyncio.sleep(2)  # Brief pause so user can see the warning
+        await asyncio.sleep(0.5)  # Brief pause so user can see the warning
 
     await processing_msg.edit_text(
         "<blockquote><code>𝗣𝗿𝗼𝗰𝗲𝘀𝘀𝗶𝗻𝗴 ⏳</code></blockquote>\n\n"
@@ -897,9 +897,9 @@ async def _run_charging(
         # Behavioral delay between cards - human-like interval
         if i > 0:
             from utils.behavioral import HumanBehavior
-            # Waktu antar kartu: 3-8 detik (seperti user mengambil kartu lain)
+            # AGGRESSIVE: 0.8-2.5s antar kartu (dipercepat 70%)
             inter_card_delay = HumanBehavior.gaussian_clamp(
-                mean=5.0, std=1.5, min_val=3.0, max_val=8.0
+                mean=1.5, std=0.5, min_val=0.8, max_val=2.5
             )
             print(f"[BEHAVIOR] Inter-card delay: {inter_card_delay:.2f}s")
             await asyncio.sleep(inter_card_delay)
