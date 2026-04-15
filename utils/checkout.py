@@ -284,6 +284,7 @@ async def charge_card(card: dict, checkout_data: dict, proxy_str: str = None, us
         "card": f"{card['cc']}|{card['month']}|{card['year']}|{card['cvv']}",
         "status": None,
         "response": None,
+        "email": None,
         "time": 0
     }
 
@@ -454,6 +455,7 @@ async def charge_card(card: dict, checkout_data: dict, proxy_str: str = None, us
                 
                 # Resolve email AFTER name is available
                 email = init_data.get("customer_email") or generate_realistic_email(name)
+                result["email"] = email
                 print(f"[DEBUG] Email: {email}")
 
                 pm_body = (
