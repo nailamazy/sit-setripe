@@ -7,24 +7,7 @@ from config import NOPECHA_KEY
 # NopeCHA v1 Token API — proper endpoint for hCaptcha token generation
 NOPECHA_SUBMIT_URL = "https://api.nopecha.com/v1/token/hcaptcha"
 NOPECHA_TIMEOUT = 120  # Max waktu tunggu solve (detik)
-NOPECHA_POLL_INTERVAL = 3  # Interval poll status (detik)
-
-
-# NopeCHA error codes
-_NOPECHA_ERRORS = {
-    1: "Invalid request — bad parameters",
-    2: "Not enough credit balance",
-    3: "Invalid API key size",
-    4: "Unrecognized CAPTCHA type",
-    5: "Server too busy, try again",
-    6: "Internal server error",
-    7: "Invalid sitekey",
-    9: "Rate limited — too many requests",
-    10: "Invalid request — check proxy format or API key",
-    11: "Unsupported captcha type",
-    12: "Proxy error",
-    14: "Banned — contact NopeCHA support",
-}
+NOPECHA_POLL_INTERVAL = 1  # Interval poll status (detik) — docs recommend 500ms min
 
 
 def _validate_hcaptcha_token(token: str):
@@ -93,11 +76,38 @@ def _is_real_hcaptcha_token(token: str) -> bool:
     return False
 
 
+def _get_http_error_description(status: int) -> str:
+    """Map NopeCHA HTTP status codes to human-readable descriptions.
+    
+    Based on NopeCHA v1 API docs:
+    https://nopecha.com/api-reference
+    """
+    return {
+        400: "Invalid Request — bad parameters or update required",
+        401: "Invalid API Key — check your NOPECHA_KEY",
+        402: "Unavailable Feature — plan upgrade required",
+        403: "Out of Credit or Free Tier Ineligible",
+        409: "Incomplete Job — still solving (poll again)",
+        429: "Rate Limited — slow down requests",
+        500: "Internal Server Error — try again later",
+    }.get(status, f"Unknown HTTP error {status}")
+
+
 async def solve_hcaptcha(site_key: str, url: str, rqdata: str = None, proxy: str = None, user_agent: str = None) -> dict | None:
     """Solve hCaptcha menggunakan NopeCHA v1 Token API.
     
     Uses the proper v1 endpoint: POST /v1/token/hcaptcha
     Auth via Authorization header, not body key field.
+    
+    Flow:
+    1. POST /v1/token/hcaptcha → returns job ID in {"data": "job_id"}
+    2. GET /v1/token/hcaptcha?id=JOB_ID → poll until {"data": "P0_eyJ...token"}
+    
+    HTTP status codes:
+    - 200: Success (token or job ID)
+    - 409: Incomplete job (keep polling)
+    - 403: Out of credit
+    - 429: Rate limited
     
     Args:
         site_key: hCaptcha sitekey dari Stripe response
@@ -162,7 +172,7 @@ async def solve_hcaptcha(site_key: str, url: str, rqdata: str = None, proxy: str
     
     try:
         async with aiohttp.ClientSession() as session:
-            # Step 1: Submit captcha task
+            # ━━━ Step 1: Submit captcha task ━━━
             async with session.post(
                 NOPECHA_SUBMIT_URL,
                 json=body,
@@ -170,7 +180,7 @@ async def solve_hcaptcha(site_key: str, url: str, rqdata: str = None, proxy: str
                 timeout=aiohttp.ClientTimeout(total=30),
             ) as resp:
                 raw_text = await resp.text()
-                print(f"[DEBUG] 📡 NopeCHA HTTP {resp.status}")
+                print(f"[DEBUG] 📡 NopeCHA Submit — HTTP {resp.status}")
                 print(f"[DEBUG]    Content-Type: {resp.content_type}")
                 print(f"[DEBUG]    Response-Length: {len(raw_text)} chars")
                 
@@ -187,18 +197,38 @@ async def solve_hcaptcha(site_key: str, url: str, rqdata: str = None, proxy: str
                     print(f"[DEBUG] ❌ NopeCHA response not JSON: {raw_text[:200]}")
                     return None
                 
-                if resp.status != 200:
-                    err_code = data.get("error", "unknown") if isinstance(data, dict) else "unknown"
-                    err_msg = data.get("message", "") if isinstance(data, dict) else ""
+                # ━━━ Handle HTTP errors on submit ━━━
+                if resp.status == 401:
+                    print(f"[DEBUG] ❌ Invalid API Key — check NOPECHA_KEY")
+                    return None
+                elif resp.status == 402:
+                    print(f"[DEBUG] ❌ Feature unavailable — plan upgrade needed")
+                    return None
+                elif resp.status == 403:
+                    msg = data.get("message", "") if isinstance(data, dict) else ""
+                    print(f"[DEBUG] ❌ Out of credit or IP banned: {msg}")
+                    return None
+                elif resp.status == 429:
+                    print(f"[DEBUG] ❌ Rate limited — too many requests")
+                    return None
+                elif resp.status == 500:
+                    print(f"[DEBUG] ❌ NopeCHA internal server error")
+                    return None
+                elif resp.status == 400:
+                    msg = data.get("message", "") if isinstance(data, dict) else ""
                     err_type = data.get("type", "") if isinstance(data, dict) else ""
-                    known = _NOPECHA_ERRORS.get(err_code, "") if isinstance(err_code, int) else ""
-                    print(f"[DEBUG] ❌ NopeCHA HTTP {resp.status} — error={err_code}, message={err_msg}, type={err_type}")
-                    if known:
-                        print(f"[DEBUG]    Known: {known}")
+                    print(f"[DEBUG] ❌ Invalid request: type={err_type}, msg={msg}")
+                    return None
+                elif resp.status != 200 and resp.status != 409:
+                    desc = _get_http_error_description(resp.status)
+                    print(f"[DEBUG] ❌ NopeCHA HTTP {resp.status}: {desc}")
                     print(f"[DEBUG]    Full response: {data}")
                     return None
                 
-                # Check if token returned immediately (string response)
+                # ━━━ Parse successful submit response ━━━
+                job_id = None
+                
+                # Token returned immediately (string response)
                 if isinstance(data, str) and _is_real_hcaptcha_token(data):
                     _validate_hcaptcha_token(data)
                     print(f"[DEBUG] ✅ hCaptcha solved instantly! Token: {data[:30]}...")
@@ -225,107 +255,129 @@ async def solve_hcaptcha(site_key: str, url: str, rqdata: str = None, proxy: str
                     job_id = data.get("data")
                     if job_id and isinstance(job_id, str) and len(job_id) > 0:
                         print(f"[DEBUG] ⏳ Job ID submitted: {job_id[:40]}... ({len(job_id)} chars) — polling for real token")
-                    elif data.get("error") == "Incomplete":
-                        print(f"[DEBUG] ⏳ NopeCHA processing... polling for result")
-                        job_id = None
                     else:
-                        print(f"[DEBUG] ⚠️ Unexpected response: {str(data)[:100]}")
-                        job_id = None
+                        # Check for error in response body (legacy compat)
+                        error = data.get("error", "")
+                        msg = data.get("message", "")
+                        if error or msg:
+                            print(f"[DEBUG] ❌ NopeCHA error in body: error={error}, message={msg}")
+                            return None
+                        print(f"[DEBUG] ⚠️ Unexpected response (no job ID): {str(data)[:100]}")
+                        return None
                 
-            # Step 2: Poll for result
+                # Safety check: must have job_id to poll
+                if not job_id:
+                    print(f"[DEBUG] ❌ No job ID received — cannot poll")
+                    return None
+                
+            # ━━━ Step 2: Poll for result ━━━
             elapsed = 0
+            consecutive_errors = 0
+            max_consecutive_errors = 5
+            
             while elapsed < NOPECHA_TIMEOUT:
                 await asyncio.sleep(NOPECHA_POLL_INTERVAL)
                 elapsed += NOPECHA_POLL_INTERVAL
                 
-                # Poll via GET with job ID, or re-POST without ID
-                if job_id:
-                    poll_url = f"{NOPECHA_SUBMIT_URL}?id={job_id}"
+                poll_url = f"{NOPECHA_SUBMIT_URL}?id={job_id}"
+                try:
                     async with session.get(
                         poll_url,
                         headers=headers,
                         timeout=aiohttp.ClientTimeout(total=30),
                     ) as poll_resp:
                         poll_raw = await poll_resp.text()
+                        
+                        # ━━━ Handle HTTP status codes during poll ━━━
+                        if poll_resp.status == 409:
+                            # Incomplete — still solving, keep polling
+                            print(f"[DEBUG] ⏳ Still solving... ({elapsed}s/{NOPECHA_TIMEOUT}s) [HTTP 409 Incomplete]")
+                            consecutive_errors = 0
+                            continue
+                        elif poll_resp.status == 403:
+                            print(f"[DEBUG] ❌ Out of credit during poll")
+                            return None
+                        elif poll_resp.status == 429:
+                            print(f"[DEBUG] ⚠️ Rate limited during poll — waiting 2s...")
+                            await asyncio.sleep(2)
+                            elapsed += 2
+                            consecutive_errors += 1
+                            if consecutive_errors >= max_consecutive_errors:
+                                print(f"[DEBUG] ❌ Too many consecutive errors during poll")
+                                return None
+                            continue
+                        elif poll_resp.status == 401:
+                            print(f"[DEBUG] ❌ Invalid API key during poll")
+                            return None
+                        elif poll_resp.status >= 500:
+                            print(f"[DEBUG] ⚠️ Server error during poll (HTTP {poll_resp.status}) — retrying...")
+                            consecutive_errors += 1
+                            if consecutive_errors >= max_consecutive_errors:
+                                print(f"[DEBUG] ❌ Too many server errors during poll")
+                                return None
+                            continue
+                        elif poll_resp.status != 200:
+                            desc = _get_http_error_description(poll_resp.status)
+                            print(f"[DEBUG] ⚠️ Unexpected HTTP {poll_resp.status} during poll: {desc}")
+                            consecutive_errors += 1
+                            if consecutive_errors >= max_consecutive_errors:
+                                print(f"[DEBUG] ❌ Too many errors during poll")
+                                return None
+                            continue
+                        
+                        # HTTP 200 — parse response
+                        consecutive_errors = 0
                         print(f"[DEBUG] ⏳ Poll HTTP {poll_resp.status}, len={len(poll_raw)}")
+                        
                         try:
                             import json as _j2
                             poll_data = _j2.loads(poll_raw)
                         except Exception:
                             print(f"[DEBUG] ⚠️ Poll response not JSON: {poll_raw[:100]}")
                             continue
-                else:
-                    # Legacy fallback: re-POST with same body
-                    async with session.post(
-                        NOPECHA_SUBMIT_URL,
-                        json=body,
-                        headers=headers,
-                        timeout=aiohttp.ClientTimeout(total=30),
-                    ) as poll_resp:
-                        poll_raw = await poll_resp.text()
-                        print(f"[DEBUG] ⏳ Poll (POST) HTTP {poll_resp.status}, len={len(poll_raw)}")
-                        try:
-                            import json as _j3
-                            poll_data = _j3.loads(poll_raw)
-                        except Exception:
-                            print(f"[DEBUG] ⚠️ Poll response not JSON: {poll_raw[:100]}")
-                            continue
-                
-                # Token returned as string
-                if isinstance(poll_data, str) and _is_real_hcaptcha_token(poll_data):
-                    _validate_hcaptcha_token(poll_data)
-                    print(f"[DEBUG] ✅ hCaptcha solved! ({elapsed}s) Token: {poll_data[:30]}...")
-                    return {"token": poll_data, "ekey": None}
-                
-                if isinstance(poll_data, dict):
-                    # Token in data field
-                    poll_val = poll_data.get("data", "")
-                    if isinstance(poll_val, str) and _is_real_hcaptcha_token(poll_val):
-                        token = poll_val
-                        ekey = poll_data.get("ekey")
-                        _validate_hcaptcha_token(token)
-                        print(f"[DEBUG] ✅ hCaptcha solved! ({elapsed}s) Token: {token[:30]}...")
-                        if ekey:
-                            print(f"[DEBUG]    ekey: {ekey[:30]}...")
-                        return {"token": token, "ekey": ekey}
-                    
-                    # Still processing — check both string and integer error codes
-                    error = poll_data.get("error", "")
-                    error_msg = str(poll_data.get("message", "")).lower()
-                    
-                    # Error 14 = BANNED per NopeCHA docs — DO NOT treat as "incomplete"
-                    # Even if message says "incomplete job", error 14 is terminal
-                    if isinstance(error, int) and error == 14:
-                        print(f"[DEBUG] ❌ NopeCHA error 14: Banned/blocked — cannot solve this captcha")
-                        print(f"[DEBUG]    Message: {error_msg}")
-                        print(f"[DEBUG]    This usually means:")
-                        print(f"[DEBUG]    - Your NopeCHA account is banned/restricted")
-                        print(f"[DEBUG]    - The captcha type (Enterprise + rqdata) is not supported")
-                        print(f"[DEBUG]    - Consider using a different solver (CapSolver, 2Captcha)")
+                        
+                        # Token returned as string
+                        if isinstance(poll_data, str) and _is_real_hcaptcha_token(poll_data):
+                            _validate_hcaptcha_token(poll_data)
+                            print(f"[DEBUG] ✅ hCaptcha solved! ({elapsed}s) Token: {poll_data[:30]}...")
+                            return {"token": poll_data, "ekey": None}
+                        
+                        if isinstance(poll_data, dict):
+                            # Token in data field
+                            poll_val = poll_data.get("data", "")
+                            if isinstance(poll_val, str) and _is_real_hcaptcha_token(poll_val):
+                                token = poll_val
+                                ekey = poll_data.get("ekey")
+                                _validate_hcaptcha_token(token)
+                                print(f"[DEBUG] ✅ hCaptcha solved! ({elapsed}s) Token: {token[:30]}...")
+                                if ekey:
+                                    print(f"[DEBUG]    ekey: {ekey[:30]}...")
+                                return {"token": token, "ekey": ekey}
+                            
+                            # Check for error in response body (compat with both old/new format)
+                            error = poll_data.get("error", "")
+                            error_msg = str(poll_data.get("message", "")).lower()
+                            
+                            # "Incomplete" in body = still solving (same as HTTP 409)
+                            if error == "Incomplete" or "incomplete" in error_msg:
+                                print(f"[DEBUG] ⏳ Still solving... ({elapsed}s/{NOPECHA_TIMEOUT}s) [body: Incomplete]")
+                                continue
+                            
+                            # Any other error in body = terminal
+                            if error:
+                                print(f"[DEBUG] ❌ NopeCHA error during poll: error={error}, msg={error_msg}")
+                                print(f"[DEBUG]    Full poll response: {str(poll_data)[:200]}")
+                                return None
+                        
+                        print(f"[DEBUG] ⏳ Polling... ({elapsed}s/{NOPECHA_TIMEOUT}s)")
+                        
+                except aiohttp.ClientError as ce:
+                    print(f"[DEBUG] ⚠️ Network error during poll: {str(ce)[:60]}")
+                    consecutive_errors += 1
+                    if consecutive_errors >= max_consecutive_errors:
+                        print(f"[DEBUG] ❌ Too many network errors during poll")
                         return None
-                    
-                    # NopeCHA can indicate "still processing" in these ways:
-                    # - {"error": "Incomplete"}
-                    # - HTTP 409 with non-14 error codes
-                    is_incomplete = (
-                        error == "Incomplete"
-                        or ("incomplete" in error_msg and not isinstance(error, int))
-                    )
-                    
-                    if is_incomplete:
-                        print(f"[DEBUG] ⏳ Still solving... ({elapsed}s/{NOPECHA_TIMEOUT}s) [error={error}, msg={error_msg}]")
-                        continue
-                    
-                    # Real error — not retryable
-                    if error:
-                        known = _NOPECHA_ERRORS.get(error, "") if isinstance(error, int) else ""
-                        print(f"[DEBUG] ❌ NopeCHA error during poll: {error}")
-                        if known:
-                            print(f"[DEBUG]    Known: {known}")
-                        print(f"[DEBUG]    Full poll response: {str(poll_data)[:200]}")
-                        return None
-                
-                print(f"[DEBUG] ⏳ Polling... ({elapsed}s/{NOPECHA_TIMEOUT}s)")
+                    continue
             
             print(f"[DEBUG] ❌ NopeCHA timeout after {NOPECHA_TIMEOUT}s")
             return None
