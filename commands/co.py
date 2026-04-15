@@ -1001,6 +1001,7 @@ async def _run_charging(
     if charged_card:
         # ━━━ HIT FORMAT — Premium charged card display ━━━
         hit_card = charged_card['card']
+        hit_email = charged_card.get('email', 'N/A')
         merchant = checkout_data['merchant'] or 'Unknown'
         product = checkout_data['product'] or 'N/A'
 
@@ -1015,6 +1016,7 @@ async def _run_charging(
 
             f"<blockquote>"
             f"💳  <code>{hit_card}</code>\n"
+            f"📧  <code>{hit_email}</code>\n"
             f"📌  CHARGED ✅  ·  Payment Successful"
             f"</blockquote>\n\n"
         )
@@ -1063,6 +1065,7 @@ async def _run_charging(
                 f"💰 <b>{price_str}</b>\n"
                 f"🏪 {checkout_data['merchant'] or 'N/A'}\n"
                 f"💳 <code>{hit_card}</code>\n"
+                f"📧 <code>{hit_email}</code>\n"
                 f"👤 {req_user}\n"
                 f"⏱ {format_time(total_time)}"
             )
@@ -1183,4 +1186,3 @@ async def _run_charging(
         )
 
         await processing_msg.edit_text(response, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
-
